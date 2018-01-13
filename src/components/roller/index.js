@@ -14,9 +14,28 @@ const DEFAULT_OPTIONS = {
   defaultRoll: '1d20',
   variableStart: '{',
   variableEnd: '}',
-  unresolvedVariableStart: '[',
-  unresolvedVariableEnd: ']',
+  rollArrayStart: '[',
+  rollArrayEnd: ']',
+  resolveRollArrays: false,
 };
+
+const AVAILABLE_METHOD_NAMES = [
+  'max',
+  'min',
+  'avg',
+];
+
+const max = function max(...rolls) {
+  return Math.max(...rolls);
+};
+
+const min = function min(...rolls) {
+  return Math.min(...rolls);
+};
+
+const avg = function avg(...rolls) {
+  return Math.floor(rolls.reduce((roll, total) => total + roll ) / rolls.length);
+}
 
 /**
  * Handles rolling of dice using Standard AdX notation
@@ -51,6 +70,12 @@ class Roller {
 
     // store variables Object for this Roller instance
     this.variables = variables;
+
+    this.functions = {
+      max,
+      min,
+      avg
+    };
   }
 
   /**
@@ -61,7 +86,50 @@ class Roller {
    * @memberof Roller
    */
   roll(notation = this.options.defaultRoll) {
-    return this.parseNotation(notation);
+    return this.calculateRoll(this.parseNotation(notation));
+  }
+
+  calculateRoll(sequence) {
+    const unresolvedVariableRegEx = /(\s?.?\s?\{\w*?\}\s?.?\s?\s?)/gm;
+
+    let foundVariables;
+
+    let manipulatedSequence = sequence;
+
+    const parsedRoll = [];
+
+    let lastIndex = 0;
+
+    while (foundVariables = unresolvedVariableRegEx.exec(manipulatedSequence, lastIndex)) {
+      if (foundVariables.index !== 0) {
+        parsedRoll.push(manipulatedSequence.substr(lastIndex, foundVariables.index - lastIndex));
+      }
+
+      lastIndex = unresolvedVariableRegEx.lastIndex;
+
+      parsedRoll.push(foundVariables[0]);
+    }
+
+    if (!parsedRoll.length) {
+      parsedRoll.push(sequence);
+    }
+
+    const resolvedRoll = parsedRoll.map((item) => {
+      let returnValue;
+
+      try {
+        returnValue = eval(item);
+      } catch(e) {
+        returnValue = item;
+      }
+
+      return returnValue;
+    });
+
+    return {
+      value: resolvedRoll.join(''),
+      sequence: parsedRoll.join(''),
+    };
   }
 
   /**
@@ -71,17 +139,47 @@ class Roller {
   parseNotation(notation) {
     const notationWithVarsReplaced = this.findAndReplaceVariables(notation);
 
-    return notationWithVarsReplaced;
+    const notationWithRollsReplaced = this.findAndReplaceRolls(notationWithVarsReplaced);
+
+    const notationWithFunctionsReplaced = this.findAndReplaceFunctions(notationWithRollsReplaced);
+
+    return notationWithFunctionsReplaced;
   }
 
-  formatVariableName(variable) {
+  findAndReplaceRolls(notation) {
+    const rollRegex = /\w\d*?d\d?\w/gm;
 
+    const foundRolls = notation.match(rollRegex);
+
+    let replacedRolls = notation;
+
+    foundRolls.forEach((roll) => {
+      const [ numberOfRolls, dieSize ] = roll.split('d');
+
+      const rolls = [];
+
+      for (let i = 0; i < numberOfRolls; i++) {
+        rolls.push(this.rollDie(dieSize));
+      }
+
+      replacedRolls = replacedRolls.replace(roll, this.formatRolls(rolls));
+    });
+
+    return replacedRolls;
+  }
+
+  formatRolls(rollArray) {
+    if (rollArray.length > 1) {
+      return `${this.options.rollArrayStart}${rollArray.toString()}${this.options.rollArrayEnd}`
+    }
+
+    return `${rollArray.toString()}`;
   }
 
   findAndReplaceVariables(notation) {
-    const variableRegex = /{.*?}/gm;
+    const variableRegEx = /{.*?}/gm;
 
-    const foundVariables = notation.match(variableRegex);
+    const foundVariables = notation.match(variableRegEx);
 
     const uniqueVariables = uniq(foundVariables);
 
@@ -97,12 +195,30 @@ class Roller {
 
       if (this.variables[variableKey]) {
         replacedVariables = replacedVariables.replace(replaceRegEx, this.variables[variableKey]);
-      } else {
-        replacedVariables = replacedVariables.replace(replaceRegEx, `${this.options.unresolvedVariableStart}${variableKey}${this.options.unresolvedVariableEnd}`);
       }
     });
 
     return replacedVariables;
+  }
+
+  findAndReplaceFunctions(notation) {
+    const functionRegEx = new RegExp(`(${AVAILABLE_METHOD_NAMES.join('|')})\\((.*?)\\)`, 'gm');
+
+    let replacedFunctions = notation;
+
+    let foundFunctions;
+
+    while(foundFunctions = functionRegEx.exec(notation)) {
+      const [ replacingString, method, args ] = foundFunctions;
+
+      const array = JSON.parse(args);
+
+      if (this.functions[method]) {
+        replacedFunctions = replacedFunctions.replace(replacingString, this.functions[method].apply(null, array));
+      }
+    }
+
+    return replacedFunctions;
   }
 
   /**
@@ -111,8 +227,8 @@ class Roller {
    * @returns {Number}
    * @memberof Roller
    */
-  rollDie(maxRoll = this.options.defaultMaxRoll) {
-    return this.generateRoll(this.options.defaultMinRoll, maxRoll);
+  rollDie(dieSize = this.options.defaultMaxRoll) {
+    return this.generateRoll(this.options.defaultMinRoll, dieSize);
   }
 
   /**
@@ -140,7 +256,7 @@ class Roller {
   generateRoll(minRoll = this.options.defaultMinRoll, maxRoll = this.options.defaultMaxRoll) {
     // much of this code was borrowed from:
     // http://dimitri.xyz/random-ints-from-random-bits/
-    let random;
+    let random = this.getRandomValue();
 
     const min = Math.ceil(minRoll);
     const max = Math.ceil(maxRoll);
@@ -149,7 +265,7 @@ class Roller {
 
     let counter = 0;
 
-    do {
+    while (!(random < Math.floor(MAX_RANGE / range) * range)) {
       random = this.getRandomValue();
 
       if (counter >= MAX_ITERATIONS) {
@@ -159,7 +275,7 @@ class Roller {
       }
 
       counter++;
-    } while (!(random < Math.floor(MAX_RANGE / range) * range));
+    }
 
     return min + random % range;
   }
@@ -171,4 +287,8 @@ const test = new Roller({
   },
 });
 
-console.log(test.roll('{initiative} + 1d20 + {initiative} + 2d8 - {test}'))
+console.log(test.roll('{initiative} + 1d20 + {initiative} + max(2d8) - min(3d4) * avg(2d6)'));
+
+console.log(test.roll('{test1} + {initiative} + 1d20 / {test2} + {initiative} + max(2d8) - min(3d4) * avg(2d6) - {test3}'));
+
+console.log(test.roll('1d20 + {initiative}'));
