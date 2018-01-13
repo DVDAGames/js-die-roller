@@ -16,7 +16,6 @@ const DEFAULT_OPTIONS = {
   variableEnd: '}',
   rollArrayStart: '[',
   rollArrayEnd: ']',
-  resolveRollArrays: false,
 };
 
 const AVAILABLE_METHOD_NAMES = [
@@ -90,19 +89,19 @@ class Roller {
   }
 
   calculateRoll(sequence) {
-    const unresolvedVariableRegEx = /(\s?.?\s?\{\w*?\}\s?.?\s?\s?)/gm;
+    const unresolvedVariableRegEx = /((\s?.?\s?\{\w*?\}\s?.?\s?\s?)|\s?.?\s?\[.*?\]\s?.?\s?\s?)/gm;
+
+    const rollArrayRegex = /\[.*?\]/gm;
 
     let foundVariables;
-
-    let manipulatedSequence = sequence;
 
     const parsedRoll = [];
 
     let lastIndex = 0;
 
-    while (foundVariables = unresolvedVariableRegEx.exec(manipulatedSequence, lastIndex)) {
+    while (foundVariables = unresolvedVariableRegEx.exec(sequence, lastIndex)) {
       if (foundVariables.index !== 0) {
-        parsedRoll.push(manipulatedSequence.substr(lastIndex, foundVariables.index - lastIndex));
+        parsedRoll.push(sequence.substr(lastIndex, foundVariables.index - lastIndex));
       }
 
       lastIndex = unresolvedVariableRegEx.lastIndex;
@@ -110,9 +109,7 @@ class Roller {
       parsedRoll.push(foundVariables[0]);
     }
 
-    if (!parsedRoll.length) {
-      parsedRoll.push(sequence);
-    }
+    parsedRoll.push(sequence.substr(lastIndex));
 
     const resolvedRoll = parsedRoll.map((item) => {
       let returnValue;
@@ -170,7 +167,7 @@ class Roller {
 
   formatRolls(rollArray) {
     if (rollArray.length > 1) {
-      return `${this.options.rollArrayStart}${rollArray.toString()}${this.options.rollArrayEnd}`
+      return `${this.options.rollArrayStart}${rollArray.join(', ')}${this.options.rollArrayEnd}`
     }
 
     return `${rollArray.toString()}`;
@@ -209,12 +206,18 @@ class Roller {
     let foundFunctions;
 
     while(foundFunctions = functionRegEx.exec(notation)) {
-      const [ replacingString, method, args ] = foundFunctions;
+      try {
+        const [ replacingString, method, args ] = foundFunctions;
 
-      const array = JSON.parse(args);
+        const array = JSON.parse(args);
 
-      if (this.functions[method]) {
-        replacedFunctions = replacedFunctions.replace(replacingString, this.functions[method].apply(null, array));
+        if (this.functions[method]) {
+          replacedFunctions = replacedFunctions.replace(replacingString, this.functions[method].apply(null, array));
+        }
+      } catch(e) {
+        console.error('Roller encountered invalid syntax.');
+
+        break;
       }
     }
 
@@ -292,3 +295,5 @@ console.log(test.roll('{initiative} + 1d20 + {initiative} + max(2d8) - min(3d4) 
 console.log(test.roll('{test1} + {initiative} + 1d20 / {test2} + {initiative} + max(2d8) - min(3d4) * avg(2d6) - {test3}'));
 
 console.log(test.roll('1d20 + {initiative}'));
+
+console.log(test.roll('max(3d20 + 1 + {initiative})'));
