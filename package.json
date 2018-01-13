@@ -1,0 +1,14 @@
+{
+  "name": "js-die-roller",
+  "version": "1.0.0",
+  "description": "Rolling complex die notation with variables and functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lodash.uniq": "^4.5.0"
+  }
+}
