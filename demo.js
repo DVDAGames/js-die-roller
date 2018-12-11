@@ -1,4 +1,11 @@
+const readline = require('readline');
+
 const Roller = require('./src/index.js');
+
+const prompt = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 const Character = new Roller({
   variables: {
@@ -31,18 +38,29 @@ const Character = new Roller({
     'word-of-radiance': {
       dmg: '3d6',
     },
+    save: {
+      str: '1d20 + 0',
+      dex: '1d20 + 4',
+      con: '1d20 + 4',
+      int: '1d20 + 1',
+      wis: '1d20 + 9',
+      cha: '1d20 + 4',
+    },
   },
 });
 
-var stdin = process.openStdin();
+const execute = () => {
+  prompt.question('What do you want to roll?\n', (roll) => {
+    if (roll) {
+      if (roll === 'exit') {
+        prompt.close();
+      } else {
+        console.log(Character.roll(roll));
 
-console.log("What do you want to roll?");
+        execute();
+      }
+    }
+  });
+}
 
-stdin.addListener("data", function(roll) {
-  // note:  d is an object, and when converted to a string it will
-  // end with a linefeed.  so we (rather crudely) account for that  
-  // with toString() and then trim() 
-  console.log(Character.roll(roll.toString().trim()));
-});
-
-
+execute();

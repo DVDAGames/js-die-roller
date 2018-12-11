@@ -412,8 +412,6 @@ class Roller {
 
         if (functionRegEx.test(args)) {
           args = this.findAndReplaceFunctions(args);
-        } else {
-          functionRegEx.exec(args);
         }
 
         // this will give us an actual Array from a String representation
@@ -494,51 +492,3 @@ class Roller {
 }
 
 module.exports = Roller;
-
-/*console.log(test.roll('{initiative} + 1d20 + {initiative} + max(2d8) - min(3d4) * avg(2d6)'));
-
-console.log(test.roll('{test1} + {initiative} + 1d20 / {test2} + {initiative} + max(2d8) - min(3d4) * avg(2d6) - {test3}'));
-
-console.log(test.roll('1d20 + {initiative}'));
-
-console.log(test.roll('max(3d20 + 1 + {initiative})'));*/
-
-/*const test2 = new Roller({
-  variables: {
-    init: 3,
-    prof: 4,
-    str: -1,
-    dex: 3,
-    con: 3,
-    int: 0,
-    wis: 4,
-    cha: -1,
-  },
-  map: {
-    initiative: '1d20 + {init}',
-    whip: {
-      dmg: '1d4 + {prof}',
-      hit: '1d20 + 8',
-    },
-    xbow: {
-      dmg: '1d6 + {prof}',
-      hit: '1d20 + 10',
-    },
-    'guiding-bolt': {
-      dmg: '4d6',
-      hit: '1d20 + 8',
-    },
-    'sacred-flame': {
-      dmg: '3d8',
-    },
-    'word-of-radiance': {
-      dmg: '3d6',
-    },
-  },
-});*/
-
-//console.log(test2.roll('2d20'));
-
-//console.log(test2.roll('sum(drop(4d6)) + max(2d4)'));
-
-//console.log(test2.roll('rapier.hit'), test2.roll('rapier.dmg'));
