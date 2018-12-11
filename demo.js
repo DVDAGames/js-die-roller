@@ -23,17 +23,20 @@ const Character = new Roller({
     whip: {
       dmg: '1d4 + {prof}',
       hit: '1d20 + 8',
+      crit: '2d4 + {prof}',
     },
     xbow: {
       dmg: '1d6 + {prof}',
       hit: '1d20 + 10',
+      crit: '2d6 + {prof}',
     },
     'guiding-bolt': {
-      dmg: '4d6',
+      dmg: 'sum(4d6)',
       hit: '1d20 + 8',
+      crit: 'sum(8d6)',
     },
     'sacred-flame': {
-      dmg: '3d8',
+      dmg: 'sum(3d8)',
     },
     'word-of-radiance': {
       dmg: '3d6',

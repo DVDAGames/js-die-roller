@@ -126,7 +126,7 @@ class Roller {
        * @memberof Roller.functions
        */
       avg: (...rolls) => {
-        return Math.floor(rolls.reduce((roll, total) => total + roll ) / rolls.length);
+        return Math.floor(rolls.reduce((total, roll) => total + roll, 0) / rolls.length);
       },
 
       /**
@@ -136,7 +136,7 @@ class Roller {
        * @memberof Roller.functions
        */
       drop: (...rolls) => {
-        return rolls.filter(item => item !== this.functions.min(...rolls));
+        return rolls.sort((a, b) => b - a).slice(0, rolls.length - 1);
       },
 
       /**
@@ -146,7 +146,7 @@ class Roller {
        * @memberof Roller.functions
        */
       sum: (...rolls) => {
-        return rolls.reduce((total, current) => total + current);
+        return rolls.reduce((total, current) => total + current, 0);
       }
     };
   }
@@ -351,6 +351,8 @@ class Roller {
     // this will find any variables in the format {variable}
     const variableRegEx = /{.*?}/gm;
 
+    console.log(notation);
+
     // collect our variables from the notation String
     const foundVariables = notation.match(variableRegEx) || [];
 
@@ -396,16 +398,14 @@ class Roller {
    */
   findAndReplaceFunctions(notation) {
     // this will find our available convenience functions
-    // const functionRegEx = new RegExp(`(${AVAILABLE_METHOD_NAMES.join('|')})\\((.*)\\)`, 'gm');
-
-    const functionRegEx = /(min|max|avg|drop|sum)\((.*)\)/gm;
+    const functionRegEx = new RegExp(`(${AVAILABLE_METHOD_NAMES.join('|')})\\((.*)\\)`, 'gm');
 
     let replacedFunctions = notation;
 
     let foundFunctions;
 
     // iterate through any functions that are found
-    while(foundFunctions = functionRegEx.exec(notation)) {
+    while(foundFunctions = functionRegEx.exec(replacedFunctions)) {
       // try to execute calling the desired function
       try {
         let [ replacingString, method, args ] = foundFunctions;
