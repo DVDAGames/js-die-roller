@@ -4,7 +4,8 @@
   "description": "Rolling complex die notation with variables and functions",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --onlyChanged",
+    "test:all": "jest",
     "demo": "node ./examples/demo.js"
   },
   "author": "",

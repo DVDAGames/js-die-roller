@@ -1,6 +1,6 @@
 const readline = require('readline');
 
-const Roller = require('./src/index.js');
+const Roller = require('../src/index.js');
 
 const prompt = readline.createInterface({
   input: process.stdin,

@@ -1,3 +1,5 @@
+const d20Syntax = require('./d20-syntax');
+
 let crypto;
 
 // use Node or Browser crypto as necessary
@@ -30,24 +32,7 @@ const DEFAULT_OPTIONS = {
   defaultMinRoll: 1,
   defaultMaxRoll: 20,
   defaultRoll: '1d20',
-  variableStart: '{',
-  variableEnd: '}',
-  rollArrayStart: '[',
-  rollArrayEnd: ']',
 };
-
-/**
- * Array of available method names for in-notation method calls
- * @type {Array}
- * @const
- */
-const AVAILABLE_METHOD_NAMES = [
-  'max',
-  'min',
-  'avg',
-  'drop',
-  'sum',
-];
 
 /**
  * Handles rolling of dice using Standard AdX notation
@@ -92,7 +77,7 @@ class Roller {
      * @desc store variables Object for this Roller instance
      * @type {Object}
      */
-    this.variables = variables;
+    this.variables = variables || {};
 
     /**
      * Object containing convenience functions that can be used in roll notation
@@ -157,10 +142,83 @@ class Roller {
    * @param {String} [notation=this.options.defaultRoll] what should we roll
    * @returns {Number}
    */
-  roll(notation = this.options.defaultRoll) {
+  roll(notation) {
     this.rolls = [];
 
-    return this.calculateRoll(this.parseNotation(this.checkRollMap(notation)));
+    const rollNotation = this.checkRollMap(notation);
+
+    const total = this.execute(d20Syntax(rollNotation).body);
+    const breakdown = this.rolls;
+
+    return {
+      total: this.functions.sum(...total),
+      roll: rollNotation,
+      breakdown,
+    };
+  }
+
+  operate(syntax) {
+    const operands = this.execute(syntax.operands);
+
+    const operand1 = operands[0];
+
+    const operand2 = operands[1];
+
+    return this.performOperation(syntax.method, operand1, operand2);
+  }
+
+  performOperation(method, operandOne, operandTwo) {
+    if (Array.isArray(operandOne)) {
+      operandOne = operandOne.reduce((total, value) => total + value, 0);
+    }
+
+    if (Array.isArray(operandTwo)) {
+      operandTwo = operandTwo.reduce((total, value) => total + value, 0);
+    }
+
+    switch (method) {
+      case 'add':
+        return operandOne + operandTwo;
+      case 'subtract':
+        return operandOne - operandTwo;
+      case 'multiply':
+        return operandOne * operandTwo;
+      case 'divide':
+        return operandOne / operandTwo;
+    }
+  }
+
+  numerate(syntax) {
+    switch (syntax.type) {
+      case 'variable':
+        return this.variables[syntax.value];
+      case 'number':
+      default:
+        return syntax.value;
+    }
+  }
+
+  useMethod(syntax) {
+    const parameters = this.execute(syntax.parameters);
+
+    return this.functions[syntax.value](...parameters);
+  }
+
+  execute(syntax) {
+    return syntax.map((definition) => {
+      switch (definition.type) {
+        case 'operator':
+          return this.operate(definition);
+        case 'roll':
+          return this.rollDie(definition);
+        case 'method':
+          return this.useMethod(definition);
+        case 'number':
+        case 'variable':
+        default:
+          return this.numerate(definition);
+      }
+    });
   }
 
   /**
@@ -197,248 +255,24 @@ class Roller {
   }
 
   /**
-   * Take a sequence of resolved rolls and variables and calculate the total
-   * @param {String} sequence The roll sequence to calculate
-   * @returns {Object} Object with calculated roll and breakdown of what was rolled { value: {Number}, breakdown: {String} }
-   */
-  calculateRoll(sequence) {
-    // this RegEx will find strings like {variable} and [1, 2, 3] inside of our 
-    // current sequence so that we can pull them out of the String and resolve the
-    // simple math that we can resolve
-    const unresolvableStringsRegEx = /((\s?.?\s?\{\w*?\}\s?.?\s?\s?)|\s?.?\s?\[.*?\]\s?.?\s?\s?)/gm;
-
-    // this Array will store the individual parts of our breakdown
-    const parsedRoll = [];
-
-    // by default we'll start at the first character in the String
-    let lastIndex = 0;
-
-    let foundVariables;
-
-    // iterate through the String and check for any matches to our variable and array regex
-    while (foundVariables = unresolvableStringsRegEx.exec(sequence, lastIndex)) {
-      // if we aren't at the start of the String, we'll clip out whatever
-      // exists between the end of our last unresolvable String and the start
-      // of our current unresolvable String
-      if (foundVariables.index !== 0) {
-        parsedRoll.push(sequence.substr(lastIndex, foundVariables.index - lastIndex));
-      }
-
-      // reset our lastIndex to start from the end of the previous unresolvable
-      // String for the next iteration
-      lastIndex = unresolvableStringsRegEx.lastIndex;
-
-      // add the found unresolvable String to our breakdown Array
-      parsedRoll.push(foundVariables[0]);
-    }
-
-    // if there is anything left in our sequence, add it to the breakdown Array
-    if (sequence.substr(lastIndex)) {
-      parsedRoll.push(sequence.substr(lastIndex));
-    }
-
-    // now that we've got our sequence separated into resolvable and
-    // unresolvable parts, we need to process what we can resolve and stich
-    // the pieces back together
-    const resolvedRoll = parsedRoll.map((item) => {
-      let returnValue;
-
-      // we'll see if we can just eval the current part
-      // which will work for math sequences like "17 + 3",
-      // but won't work for unresolvable pieces like "{Initiative}"
-      // or roll Arrays like: "[17, 4, 16]"
-      try {
-        returnValue = eval(item);
-      } catch(e) {
-        returnValue = item;
-      }
-
-      return returnValue;
-    });
-
-    const { rolls } = this;
-
-    // return our calculated roll and a breakdown of what went into that calculation
-    return {
-      value: resolvedRoll.join(''),
-      breakdown: parsedRoll.join(''),
-      rolls,
-    };
-  }
-
-  /**
-   * Parse Roller die notation String
-   * @param {String} [notation=this.options.defaultRoll] die notation to parse
-   * @returns {String}
-   */
-  parseNotation(notation) {
-    // replace variables with values first
-    const notationWithVarsReplaced = this.findAndReplaceVariables(notation);
-
-    // replace roll notation, like 1d20, with rolled values second
-    const notationWithRollsReplaced = this.findAndReplaceRolls(notationWithVarsReplaced);
-
-    // replace roll Arrays in function calls with the result of the
-    // convenience function last
-    const notationWithFunctionsReplaced = this.findAndReplaceFunctions(notationWithRollsReplaced);
-
-    return notationWithFunctionsReplaced;
-  }
-
-  /**
-   * Take a sequence of roll notation and replace rolls with values
-   * @param {String} notation The notation for this roll
-   * @returns {String}
-   */
-  findAndReplaceRolls(notation) {
-    // this will identify roll notation like 1d20, 2d6, 3d4, etc.
-    const rollRegex = /\w\d*?d\d?\w/gm;
-
-    // find all of our the rolls we need to resolve
-    const foundRolls = notation.match(rollRegex);
-
-    // generate a new String so we aren't making changes to the function param
-    let replacedRolls = notation;
-
-    // iterate through our rolls and resolve them
-    foundRolls.forEach((roll) => {
-      // get the number of dice to roll and the size of die to use
-      const [ numberOfRolls, dieSize ] = roll.split('d');
-
-      const rolls = [];
-
-      // roll the necessary dice
-      for (let i = 0; i < numberOfRolls; i++) {
-        const rolledValue = this.rollDie(dieSize);
-
-        this.rolls.push({ [roll] : rolledValue });
-
-        rolls.push(rolledValue);
-      }
-
-      // replace roll notation in our String with the result of the roll
-      replacedRolls = replacedRolls.replace(roll, this.formatRolls(rolls));
-    });
-
-    // return roll String with our roll notation replaced with values
-    return replacedRolls;
-  }
-
-  /**
-   * Take a roll sequence and format it if necessary
-   * @param {Array} [rollArray=[]] Array of rolled values
-   * @returns {String}
-   * @example 3d20 -> [17. 4. 11] || 1d20 -> 16
-   */
-  formatRolls(rollArray = []) {
-    // if we only have one role, we'll give the user back a visual
-    // Array of roles, like 3d20 -> [17, 4, 11]
-    if (rollArray.length > 1) {
-      return `${this.options.rollArrayStart}${rollArray.join(', ')}${this.options.rollArrayEnd}`
-    }
-
-    return rollArray[0];
-  }
-
-  /**
-   * Take a sequence of roll notation and replace variables with values
-   * @desc if the variable was never provided it will still be a String
-   * @param {String} notation Roll notation with included variables
-   * @returns {String}
-   * @example 1d20 + {init} -> 1d20 + 2 || 1d8 + {unknown} -> 8 + {unknown}
-   */
-  findAndReplaceVariables(notation) {
-    // this will find any variables in the format {variable}
-    const variableRegEx = /{.*?}/gm;
-
-    console.log(notation);
-
-    // collect our variables from the notation String
-    const foundVariables = notation.match(variableRegEx) || [];
-
-    let replacedVariables = notation;
-
-    foundVariables
-      // get rid of any duplicates as we're only need to replace each
-      // variable once regardless of how many times it is used in the notation
-      .filter((item, index, array) => {
-        if (array.indexOf(item) !== index) {
-          return false;
-        }
-
-        return true;
-      })
-
-      // replace variable with it's value
-      .forEach((item) => {
-        // strip the delimiters from our variable name
-        const variableKey = item
-          .replace(this.options.variableStart, '')
-          .replace(this.options.variableEnd, '')
-        ;
-
-        // create a regex for globally replacing this variable
-        const replaceRegEx = new RegExp(`${item}`, 'gm');
-
-        // if the variable exists, we'll replace it with the relevant value
-        if (this.variables[variableKey]) {
-          replacedVariables = replacedVariables.replace(replaceRegEx, this.variables[variableKey]);
-        }
-      })
-    ;
-
-    // return our new String with any resolvable variables replaced with values
-    return replacedVariables;
-  }
-
-  /**
-   * Take a sequence of roll notation and replace roll Array functions with values
-   * @param {String} notation Roll notation with included function calls
-   * @returns {String}
-   */
-  findAndReplaceFunctions(notation) {
-    // this will find our available convenience functions
-    const functionRegEx = new RegExp(`(${AVAILABLE_METHOD_NAMES.join('|')})\\((.*)\\)`, 'gm');
-
-    let replacedFunctions = notation;
-
-    let foundFunctions;
-
-    // iterate through any functions that are found
-    while(foundFunctions = functionRegEx.exec(replacedFunctions)) {
-      // try to execute calling the desired function
-      try {
-        let [ replacingString, method, args ] = foundFunctions;
-
-        if (functionRegEx.test(args)) {
-          args = this.findAndReplaceFunctions(args);
-        }
-
-        // this will give us an actual Array from a String representation
-        const array = JSON.parse(args);
-
-        // make sure the function exists before trying to call it
-        if (this.functions[method] && typeof this.functions[method] === 'function') {
-          replacedFunctions = replacedFunctions.replace(replacingString, this.functions[method].apply(null, array));
-        }
-      } catch(e) {
-        console.error('Roller encountered invalid syntax.');
-
-        break;
-      }
-    }
-
-    // return our new String with roll Array functions resolved
-    return replacedFunctions;
-  }
-
-  /**
    * Rolls a single die and returns the result
    * @param {Number} [dieSize=this.options.defaultMaxRoll] Number of sides on the die to roll
    * @returns {Number}
    */
-  rollDie(dieSize = this.options.defaultMaxRoll) {
-    return this.generateRoll(this.options.defaultMinRoll, dieSize);
+  rollDie(syntax) {
+    const rolls = [];
+
+    for(let roll = 0; roll < syntax.dice; roll++) {
+      const thisRoll = this.generateRoll(this.options.defaultMinRoll, syntax.die);
+
+      rolls.push(thisRoll);
+
+      this.rolls.push({
+        [`${syntax.dice}d${syntax.die}: ${roll + 1}`]: thisRoll,
+      });
+    }
+
+    return rolls;
   }
 
   /**
