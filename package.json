@@ -4,12 +4,12 @@
   "description": "Rolling complex die notation with variables and functions",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "demo": "node ./examples/demo.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lodash.uniq": "^4.5.0"
+    "jest": "^23.6.0"
   }
 }
