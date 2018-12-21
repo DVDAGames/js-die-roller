@@ -41,6 +41,8 @@ functions are coming soon!*):
   - `avg`: Calculate the average of a set of dice rolls: `avg(4d6)`
   - `drop`: Drop the lowest value from a set of dice rolls: `drop(4d6)`
   - `count`: Count the number of times a specific value appears: `count(6, 8d6)`
+- **nested functions**: You can nest functions to achieve even more advanced
+combinations: `sum(drop(4d6))`
 - **named rolls**: You can define your own named rolls and call them directly
 by name,  for example: `whip: '1d4 + $proficiency'` -> called via `whip`
 
