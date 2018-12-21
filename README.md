@@ -2,6 +2,10 @@
 
 Simple, intuitive die rolling in a JavaScript Class with better random seeding.
 
+**NOTE**: Roller is currently in a Beta state and should be used with that in mind.
+Please file an [Issue](https://github.com/DVDAGames/js-die-roller/issues) for any
+bugs you discover.
+
 ## Why another die rolling implementation?
 
 I found a lot of other die rolling libraries lacking in features and unable to
@@ -41,7 +45,7 @@ functions are coming soon!*):
   - `avg`: Calculate the average of a set of dice rolls: `avg(4d6)`
   - `drop`: Drop the lowest value from a set of dice rolls: `drop(4d6)`
   - `count`: Count the number of times a specific value appears: `count(6, 8d6)`
-- **nested functions**: You can nest functions to achieve even more advanced
+  - *nesting functions*: You can nest functions to achieve even more advanced
 combinations: `sum(drop(4d6))`
 - **named rolls**: You can define your own named rolls and call them directly
 by name,  for example: `whip: '1d4 + $proficiency'` -> called via `whip`
@@ -49,6 +53,11 @@ by name,  for example: `whip: '1d4 + $proficiency'` -> called via `whip`
 Roller allows you to basically define a whole character sheet as a set of variables
 and a map of functions and then use readable names to call and execute the various
 die rolls.
+
+**NOTE**: Complex function nesting with multiple parameters is not currently
+supported, but will be available in a future release. For example, the following
+pattern *could* be used to generate a character's stat block using a common rolling
+methodology, but is not currently supported: `drop(sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)))`
 
 ## Examples
 
