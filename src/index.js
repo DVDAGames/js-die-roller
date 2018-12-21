@@ -219,7 +219,6 @@ class Roller {
   }
 
   numerate(syntax) {
-    console.log(syntax);
     switch (syntax.type) {
       case 'variable':
         return this.variables[syntax.value.substr(1)];
