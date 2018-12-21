@@ -91,7 +91,7 @@ class Roller {
        * @memberof Roller.functions
        */
       max: (...rolls) => {
-        return Math.max(...rolls);
+        return Math.max(...rolls[0]);
       },
 
       /**
@@ -101,7 +101,7 @@ class Roller {
        * @memberof Roller.functions
        */
       min: (...rolls) => {
-        return Math.min(...rolls);
+        return Math.min(...rolls[0]);
       },
 
       /**
@@ -121,7 +121,7 @@ class Roller {
        * @memberof Roller.functions
        */
       drop: (...rolls) => {
-        return rolls.sort((a, b) => b - a).slice(0, rolls.length - 1);
+        return rolls[0].sort((a, b) => b - a).slice(0, rolls[0].length - 1);
       },
 
       /**
@@ -131,7 +131,7 @@ class Roller {
        * @memberof Roller.functions
        */
       sum: (...rolls) => {
-        return rolls.reduce((total, current) => total + current, 0);
+        return rolls[0].reduce((total, current) => total + current, 0);
       }
     };
   }
@@ -145,14 +145,23 @@ class Roller {
   roll(notation) {
     this.rolls = [];
 
-    const rollNotation = this.checkRollMap(notation);
+    const roll = this.checkRollMap(notation);
 
-    const total = this.execute(d20Syntax(rollNotation).body);
     const breakdown = this.rolls;
 
+    let total = this.execute(d20Syntax(roll).body);
+
+    if (Array.isArray(total)) {
+      if (total.length > 1) {
+        total = this.functions.sum(...total);
+      } else {
+        total = total[0];
+      }
+    }
+
     return {
-      total: this.functions.sum(...total),
-      roll: rollNotation,
+      total,
+      roll,
       breakdown,
     };
   }
