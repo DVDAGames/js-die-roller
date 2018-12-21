@@ -16,7 +16,8 @@ well I could generate random numbers.
 - **Better Random Values**: Roller attempts to reduces bias and leverages the
 `crypto` API to generate it's random rolls
 - **Standard Die Notation**: Roller parses and executes almost all standard die
-notation
+notation, it leverages a light Abstract Syntax Tree (AST) implementation to achieve
+this and make it easier to adjust in the future
 
 Roller supports some pretty advanced features along with parsing most standard
 die notation (`NdX + B` where `N` is how many dice to roll, `X` is the size of
@@ -31,7 +32,7 @@ from [Dimitri DeFigueiredo Ph.D.](http://dimitri.xyz/about/)
 ### Advanced Features
 
 - **variables**: You can assign variables to a Roller instance and reference those
-variables when performing a roll, for example: `1d20 + {initiative}`
+variables when performing a roll, for example: `1d20 + $initiative`
 - **functions**: You can work with some built-in Roller functions; (*Nested
 functions are coming soon!*):
   - `min`: Take the minimum roll from a set of dice rolls: `min(2d20)`
@@ -39,8 +40,9 @@ functions are coming soon!*):
   - `sum`: Calculate the sum of a set of dice rolls: `sum(8d6)`
   - `avg`: Calculate the average of a set of dice rolls: `avg(4d6)`
   - `drop`: Drop the lowest value from a set of dice rolls: `drop(4d6)`
+  - `count`: Count the number of times a specific value appears: `count(6, 8d6)`
 - **named rolls**: You can define your own named rolls and call them directly
-by name,  for example: `whip: '1d4 + {proficiency}'` -> called via `whip`
+by name,  for example: `whip: '1d4 + $proficiency'` -> called via `whip`
 
 Roller allows you to basically define a whole character sheet as a set of variables
 and a map of functions and then use readable names to call and execute the various
