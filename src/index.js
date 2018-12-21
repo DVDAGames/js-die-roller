@@ -32,7 +32,10 @@ const DEFAULT_OPTIONS = {
   defaultMinRoll: 1,
   defaultMaxRoll: 20,
   defaultRoll: '1d20',
+  defaultCount: 6,
 };
+
+const VARIABLE_REGEX = /\$(\w+)/;
 
 /**
  * Handles rolling of dice using Standard AdX notation
@@ -91,7 +94,7 @@ class Roller {
        * @memberof Roller.functions
        */
       max: (...rolls) => {
-        return Math.max(...rolls[0]);
+        return rolls.map(set => Math.max(...set));
       },
 
       /**
@@ -101,7 +104,7 @@ class Roller {
        * @memberof Roller.functions
        */
       min: (...rolls) => {
-        return Math.min(...rolls[0]);
+        return rolls.map(set => Math.min(...set));
       },
 
       /**
@@ -111,7 +114,7 @@ class Roller {
        * @memberof Roller.functions
        */
       avg: (...rolls) => {
-        return Math.floor(rolls[0].reduce((total, roll) => total + roll, 0) / rolls[0].length);
+        return rolls.map(set => Math.floor(set.reduce((total, roll) => total + roll, 0) / rolls[0].length));
       },
 
       /**
@@ -121,7 +124,7 @@ class Roller {
        * @memberof Roller.functions
        */
       drop: (...rolls) => {
-        return rolls[0].sort((a, b) => b - a).slice(0, rolls[0].length - 1);
+        return rolls.map(set => set.sort((a, b) => b - a).slice(0, set.length - 1));
       },
 
       /**
@@ -130,12 +133,12 @@ class Roller {
        * @returns {Number}
        * @memberof Roller.functions
        */
-      sum: (...rolls) => {
+      sum: (rolls) => {
         return rolls[0].reduce((total, current) => total + current, 0);
       },
 
-      count: (number, ...rolls) => {
-        return rolls[0].reduce((totalCount, roll) => (roll === number) ? totalCount + 1 : totalCount, 0);
+      count: (number = this.options.defaultCount, ...rolls) => {
+        return rolls.map(set => set.reduce((totalCount, roll) => (roll === number) ? totalCount + 1 : totalCount, 0));
       },
     };
   }
@@ -163,11 +166,25 @@ class Roller {
       }
     }
 
+    const displayRoll = this.replaceVariables(roll);
+
     return {
       total,
-      roll,
+      roll: displayRoll,
       breakdown,
     };
+  }
+
+  replaceVariables(roll) {
+    let newRoll = roll;
+
+    while (VARIABLE_REGEX.test(newRoll)) {
+      const [ match, variableName ] = VARIABLE_REGEX.exec(roll);
+
+      newRoll = newRoll.replace(match, (this.variables[variableName]) ? this.variables[variableName] : variableName);
+    }
+
+    return newRoll;
   }
 
   operate(syntax) {
@@ -202,9 +219,10 @@ class Roller {
   }
 
   numerate(syntax) {
+    console.log(syntax);
     switch (syntax.type) {
       case 'variable':
-        return this.variables[syntax.value];
+        return this.variables[syntax.value.substr(1)];
       case 'number':
       default:
         return syntax.value;
@@ -281,7 +299,7 @@ class Roller {
       rolls.push(thisRoll);
 
       this.rolls.push({
-        [`${syntax.dice}d${syntax.die}: ${roll + 1}`]: thisRoll,
+        [`${syntax.dice}d${syntax.die}: ${this.rolls.length}`]: thisRoll,
       });
     }
 
