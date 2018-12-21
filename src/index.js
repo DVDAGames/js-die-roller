@@ -111,7 +111,7 @@ class Roller {
        * @memberof Roller.functions
        */
       avg: (...rolls) => {
-        return Math.floor(rolls.reduce((total, roll) => total + roll, 0) / rolls.length);
+        return Math.floor(rolls[0].reduce((total, roll) => total + roll, 0) / rolls[0].length);
       },
 
       /**
@@ -132,7 +132,11 @@ class Roller {
        */
       sum: (...rolls) => {
         return rolls[0].reduce((total, current) => total + current, 0);
-      }
+      },
+
+      count: (number, ...rolls) => {
+        return rolls[0].reduce((totalCount, roll) => (roll === number) ? totalCount + 1 : totalCount, 0);
+      },
     };
   }
 

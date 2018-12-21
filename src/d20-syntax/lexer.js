@@ -6,6 +6,7 @@ module.exports = (syntaxString) => {
     'avg',
     'drop',
     'sum',
+    'count',
   ];
 
   // this are the basic mathematic operators our d20 language supports
@@ -40,6 +41,10 @@ module.exports = (syntaxString) => {
       .split(/\s+/)
       .filter(node => node.length > 0)
       .map((node, index, nodes) => {
+        if (node[node.length - 1] === ',') {
+          node = node.substr(0, node.length - 1);
+        }
+
         if (foundMethodRegex.test(node)) {
           const [ match, methodName, methodId ] = foundMethodRegex.exec(node);
 
