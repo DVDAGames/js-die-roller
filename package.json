@@ -1,6 +1,6 @@
 {
   "name": "@dvdagames/js-die-roller",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Rolling complex die notation with variables and functions",
   "main": "src/index.js",
   "scripts": {

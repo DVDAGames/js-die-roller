@@ -1,10 +1,10 @@
-const d20Syntax = require('./d20-syntax');
+const d20Syntax = require("./d20-syntax");
 
 let crypto;
 
 // use Node or Browser crypto as necessary
 if (require && module) {
-  crypto = require('crypto');
+  crypto = require("crypto");
 } else {
   crypto = window.crypto || window.msCrypto || {};
 }
@@ -31,7 +31,7 @@ const MAX_RANGE = 4294967296;
 const DEFAULT_OPTIONS = {
   defaultMinRoll: 1,
   defaultMaxRoll: 20,
-  defaultRoll: '1d20',
+  defaultRoll: "1d20",
   defaultCount: 6,
 };
 
@@ -49,9 +49,87 @@ class Roller {
    * @constructor
    */
   constructor(config = {}) {
+    /**
+     * Object containing convenience functions that can be used in roll notation
+     * @type {Object}
+     */
+    this.functions = {
+      /**
+       * Simple method for returning the maximum value from an Array of rolls
+       * @param {...Number} rolls Any number of rolled values
+       * @returns {Number}
+       * @memberof Roller.functions
+       */
+      max: (...rolls) => {
+        return rolls.map((set) => Math.max(...set));
+      },
+
+      /**
+       * Simple method for returning the minimum value from an Array of rolls
+       * @param {...Number} rolls Any number of rolled values
+       * @returns {Number}
+       * @memberof Roller.functions
+       */
+      min: (...rolls) => {
+        return rolls.map((set) => Math.min(...set));
+      },
+
+      /**
+       * Simple method for returning the average value from an Array of rolls
+       * @param {...Number} rolls Any number of rolled values
+       * @returns {Number}
+       * @memberof Roller.functions
+       */
+      avg: (...rolls) => {
+        return rolls.map((set) =>
+          Math.floor(
+            set.reduce((total, roll) => total + roll, 0) / rolls[0].length
+          )
+        );
+      },
+
+      /**
+       * Simple method for dropping the lowest value from an Array of rolls
+       * @param {...Number} rolls Any number of rolled values
+       * @returns {Array}
+       * @memberof Roller.functions
+       */
+      drop: (...rolls) => {
+        return rolls.map((set) =>
+          set.sort((a, b) => b - a).slice(0, set.length - 1)
+        );
+      },
+
+      /**
+       * Simple method for add values in an Array of rolls
+       * @param {...Number} rolls Any number of rolled values
+       * @returns {Number}
+       * @memberof Roller.functions
+       */
+      sum: (rolls) => {
+        if (rolls.length > 1) {
+          return rolls.reduce((total, current) => total + current, 0);
+        }
+
+        return rolls[0].reduce((total, current) => total + current, 0);
+      },
+
+      count: (number = this.options.defaultCount, ...rolls) => {
+        return rolls.map((set) =>
+          set.reduce(
+            (totalCount, roll) =>
+              roll === number ? totalCount + 1 : totalCount,
+            0
+          )
+        );
+      },
+    };
+
     // polymorphic handing of Roller to allow user to just pass a simple die
     // notation and receive a result as this.result
-    if (typeof config === 'string') {
+    if (typeof config === "string") {
+      this.options = DEFAULT_OPTIONS;
+
       this.result = this.roll(config);
 
       return this;
@@ -81,66 +159,6 @@ class Roller {
      * @type {Object}
      */
     this.variables = variables || {};
-
-    /**
-     * Object containing convenience functions that can be used in roll notation
-     * @type {Object}
-     */
-    this.functions = {
-      /**
-       * Simple method for returning the maximum value from an Array of rolls
-       * @param {...Number} rolls Any number of rolled values
-       * @returns {Number}
-       * @memberof Roller.functions
-       */
-      max: (...rolls) => {
-        return rolls.map(set => Math.max(...set));
-      },
-
-      /**
-       * Simple method for returning the minimum value from an Array of rolls
-       * @param {...Number} rolls Any number of rolled values
-       * @returns {Number}
-       * @memberof Roller.functions
-       */
-      min: (...rolls) => {
-        return rolls.map(set => Math.min(...set));
-      },
-
-      /**
-       * Simple method for returning the average value from an Array of rolls
-       * @param {...Number} rolls Any number of rolled values
-       * @returns {Number}
-       * @memberof Roller.functions
-       */
-      avg: (...rolls) => {
-        return rolls.map(set => Math.floor(set.reduce((total, roll) => total + roll, 0) / rolls[0].length));
-      },
-
-      /**
-       * Simple method for dropping the lowest value from an Array of rolls
-       * @param {...Number} rolls Any number of rolled values
-       * @returns {Array}
-       * @memberof Roller.functions
-       */
-      drop: (...rolls) => {
-        return rolls.map(set => set.sort((a, b) => b - a).slice(0, set.length - 1));
-      },
-
-      /**
-       * Simple method for add values in an Array of rolls
-       * @param {...Number} rolls Any number of rolled values
-       * @returns {Number}
-       * @memberof Roller.functions
-       */
-      sum: (rolls) => {
-        return rolls[0].reduce((total, current) => total + current, 0);
-      },
-
-      count: (number = this.options.defaultCount, ...rolls) => {
-        return rolls.map(set => set.reduce((totalCount, roll) => (roll === number) ? totalCount + 1 : totalCount, 0));
-      },
-    };
   }
 
   /**
@@ -160,7 +178,7 @@ class Roller {
 
     if (Array.isArray(total)) {
       if (total.length > 1) {
-        total = this.functions.sum(...total);
+        total = [this.functions.sum(...total)];
       } else {
         total = total[0];
       }
@@ -179,9 +197,14 @@ class Roller {
     let newRoll = roll;
 
     while (VARIABLE_REGEX.test(newRoll)) {
-      const [ match, variableName ] = VARIABLE_REGEX.exec(roll);
+      const [match, variableName] = VARIABLE_REGEX.exec(roll);
 
-      newRoll = newRoll.replace(match, (this.variables[variableName]) ? this.variables[variableName] : variableName);
+      newRoll = newRoll.replace(
+        match,
+        this.variables[variableName]
+          ? this.variables[variableName]
+          : variableName
+      );
     }
 
     return newRoll;
@@ -207,22 +230,22 @@ class Roller {
     }
 
     switch (method) {
-      case 'add':
+      case "add":
         return operandOne + operandTwo;
-      case 'subtract':
+      case "subtract":
         return operandOne - operandTwo;
-      case 'multiply':
+      case "multiply":
         return operandOne * operandTwo;
-      case 'divide':
+      case "divide":
         return operandOne / operandTwo;
     }
   }
 
   numerate(syntax) {
     switch (syntax.type) {
-      case 'variable':
+      case "variable":
         return this.variables[syntax.value.substr(1)];
-      case 'number':
+      case "number":
       default:
         return syntax.value;
     }
@@ -237,14 +260,14 @@ class Roller {
   execute(syntax) {
     return syntax.map((definition) => {
       switch (definition.type) {
-        case 'operator':
+        case "operator":
           return this.operate(definition);
-        case 'roll':
+        case "roll":
           return this.rollDie(definition);
-        case 'method':
+        case "method":
           return this.useMethod(definition);
-        case 'number':
-        case 'variable':
+        case "number":
+        case "variable":
         default:
           return this.numerate(definition);
       }
@@ -260,7 +283,7 @@ class Roller {
   checkRollMap(action) {
     // in case we were given an action with a nested path
     // we'll want to split that path into its parts and resolve it
-    const actionMapPathArray = action.split('.');
+    const actionMapPathArray = action.split(".");
 
     // by default we'll be searching this.map for the provided path
     let currentPath = this.map;
@@ -268,7 +291,10 @@ class Roller {
     // iterate through every part of the path and ensure we can resolve it
     // we use an every() here so we can short-circuit out if the path can't be resolved
     actionMapPathArray.every((path) => {
-      if (currentPath.hasOwnProperty(path)) {
+      if (
+        typeof currentPath !== "undefined" &&
+        currentPath.hasOwnProperty(path)
+      ) {
         currentPath = currentPath[path];
 
         return true;
@@ -292,8 +318,11 @@ class Roller {
   rollDie(syntax) {
     const rolls = [];
 
-    for(let roll = 0; roll < syntax.dice; roll++) {
-      const thisRoll = this.generateRoll(this.options.defaultMinRoll, syntax.die);
+    for (let roll = 0; roll < syntax.dice; roll++) {
+      const thisRoll = this.generateRoll(
+        this.options.defaultMinRoll,
+        syntax.die
+      );
 
       rolls.push(thisRoll);
 
@@ -313,8 +342,8 @@ class Roller {
     // basic idea here was borrowed from:
     // http://dimitri.xyz/random-ints-from-random-bits/
     if (crypto.randomBytes) {
-      return crypto.randomBytes(4).readUInt32LE();
-    } else if(crypto.getRandomValues) {
+      return crypto.randomBytes(4).readUInt32LE(0);
+    } else if (crypto.getRandomValues) {
       return crypto.getRandomValues(new Uint32Array(1))[0];
     } else {
       return Math.floor(Math.random() * (MAX_RANGE - 1) + 1);
@@ -327,7 +356,10 @@ class Roller {
    * @param {Number} [maxRoll=this.options.defaultMaxRoll] Maximum number to roll
    * @returns {Number}
    */
-  generateRoll(minRoll = this.options.defaultMinRoll, maxRoll = this.options.defaultMaxRoll) {
+  generateRoll(
+    minRoll = this.options.defaultMinRoll,
+    maxRoll = this.options.defaultMaxRoll
+  ) {
     // much of this code was borrowed from:
     // http://dimitri.xyz/random-ints-from-random-bits/
     let random = this.getRandomValue();
@@ -343,7 +375,9 @@ class Roller {
       random = this.getRandomValue();
 
       if (counter >= MAX_ITERATIONS) {
-        console.warn('Roller iterated too many times trying to ensure randomness');
+        console.warn(
+          "Roller iterated too many times trying to ensure randomness"
+        );
 
         break;
       }
@@ -351,7 +385,7 @@ class Roller {
       counter++;
     }
 
-    return min + random % range;
+    return min + (random % range);
   }
 }
 
