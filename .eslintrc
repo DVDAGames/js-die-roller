@@ -1,0 +1,13 @@
+{
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "plugin:markdown/recommended",
+    "standard-with-typescript",
+    "prettier"
+  ],
+  "plugins": ["markdown", "@typescript-eslint"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

@@ -1,5 +1,5 @@
-import crypto from "./utils/crypto"
-import d20 from "./utils/d20"
+import crypto from './utils/crypto'
+import d20 from './utils/d20'
 import {
   D20Node,
   OperatorNode,
@@ -9,7 +9,7 @@ import {
   NodeType,
   NumberNode,
   RollNode,
-} from "./utils/d20/types"
+} from './utils/d20/types'
 
 import {
   DEFAULT_OPTIONS,
@@ -17,7 +17,7 @@ import {
   VARIABLE_REGEX,
   MAX_RANGE,
   MAX_ITERATIONS,
-} from "./constants"
+} from './constants'
 
 import {
   RollerConfig,
@@ -27,7 +27,7 @@ import {
   RollerRollNotation,
   RollerRollResult,
   RollerRoll,
-} from "./types"
+} from './types'
 
 export type RollerMapper = (rolls: number[]) => number[]
 
@@ -35,8 +35,10 @@ export type RollerDropper = (rolls: number[]) => number[][]
 
 export type RollerCounter = (count: number, rolls: number[]) => number[]
 
+export type RollerReducer = (rolls: number[]) => number
+
 export interface RollerFunctionMapping {
-  [key: string]: RollerMapper | RollerDropper | RollerCounter
+  [key: string]: RollerMapper | RollerDropper | RollerCounter | RollerReducer
 }
 
 export interface RollerInterface {
@@ -54,45 +56,45 @@ export default class Roller implements RollerInterface {
    * @desc extend defaults with provided options
    * @type {Object}
    */
-  options: RollerInterface["options"] = DEFAULT_OPTIONS
+  options: RollerInterface['options'] = DEFAULT_OPTIONS
   /**
    * Object containing a map of variables and their values for use in notation
    * @desc store variables Object for this Roller instance
    * @type {Object}
    */
-  variables: RollerInterface["variables"] = {}
+  variables: RollerInterface['variables'] = {}
   /**
    * Object mapping roll notation Strings to convenient names
    * @desc store roll map Object for this Roller instance
    * @type {Object}
    */
-  map: RollerInterface["map"] = {}
+  map: RollerInterface['map'] = {}
 
   /**
    * @desc Array of various rolls that were made
    * @type {Array}
    */
-  rolls: RollerInterface["rolls"] = []
+  rolls: RollerInterface['rolls'] = []
 
   /**
    * @desc Array with final results of all rolls and operations
    * @type {Array}
    */
-  result: RollerInterface["result"]
+  result: RollerInterface['result']
 
   /**
    * @desc Object containing convenience functions that can be used in roll notation
    * @type {Object}
    */
-  functions: RollerInterface["functions"] = {
+  functions: RollerInterface['functions'] = {
     /**
      * Simple method for returning the maximum value from an Array of rolls
      * @param {...Number} rolls Any number of rolled values
      * @returns {Number}
      * @memberof Roller.functions
      */
-    max: (...rolls: number[][]): number[] => {
-      return rolls.map((set) => Math.max(...set))
+    max: (...rolls: number[][]): number => {
+      return Math.max(...rolls.flat())
     },
 
     /**
@@ -101,8 +103,8 @@ export default class Roller implements RollerInterface {
      * @returns {Number}
      * @memberof Roller.functions
      */
-    min: (...rolls: number[][]): number[] => {
-      return rolls.map((set) => Math.min(...set))
+    min: (...rolls: number[][]): number => {
+      return Math.min(...rolls.flat())
     },
 
     /**
@@ -168,7 +170,7 @@ export default class Roller implements RollerInterface {
   constructor(config: RollerConfig | RollerRollNotation) {
     // polymorphic handing of Roller to allow user to just pass a simple die
     // notation and receive a result as this.result
-    if (typeof config === "string") {
+    if (typeof config === 'string') {
       this.options = DEFAULT_OPTIONS
 
       this.result = this.roll(config)
@@ -203,7 +205,7 @@ export default class Roller implements RollerInterface {
 
     if (Array.isArray(total)) {
       if (total.length > 1) {
-        // @ts-expect-error
+        // @ts-expect-error figure out why we can't spread this
         total = [this.functions.sum(...total)]
       } else {
         total = total[0]
@@ -230,7 +232,7 @@ export default class Roller implements RollerInterface {
 
         newNotation = newNotation.replace(
           match,
-          typeof this.variables?.[variableName] !== "undefined"
+          typeof this.variables?.[variableName] !== 'undefined'
             ? this.variables[variableName].toString()
             : variableName
         )
@@ -241,7 +243,7 @@ export default class Roller implements RollerInterface {
   }
 
   operate(syntax: OperatorNode): number[] {
-    if (typeof syntax?.operands !== "undefined") {
+    if (typeof syntax?.operands !== 'undefined') {
       const operands = this.execute(syntax.operands)
 
       if (operands.length === 2) {
@@ -286,15 +288,15 @@ export default class Roller implements RollerInterface {
       case NodeType.VARIABLE: {
         const variableName = node.value?.toString().substring(1)
 
-        if (typeof variableName !== "undefined") {
-          return this.variables[variableName]
+        if (typeof variableName !== 'undefined') {
+          return [this.variables[variableName]]
         }
 
-        return node.value
+        return [node.value]
       }
       case NodeType.NUMBER:
       default:
-        return node.value
+        return [node.value]
     }
   }
 
@@ -302,7 +304,7 @@ export default class Roller implements RollerInterface {
     const parameters = this.execute(node.parameters)
 
     if (node.value !== null && Array.isArray(parameters)) {
-      // @ts-expect-error
+      // @ts-expect-error figure out why we can't spread here
       return this.functions[node.value.toString()](...parameters)
     }
 
@@ -335,7 +337,7 @@ export default class Roller implements RollerInterface {
   checkRollMap(action: RollerRollNotation): RollerRollNotation {
     // in case we were given an action with a nested path
     // we'll want to split that path into its parts and resolve it
-    const actionMapPathArray = action.split(".")
+    const actionMapPathArray = action.split('.')
 
     // by default we'll be searching this.map for the provided path
     let currentPath: Record<string, unknown> | unknown = this.map
@@ -344,7 +346,7 @@ export default class Roller implements RollerInterface {
     // we use an every() here so we can short-circuit out if the path can't be resolved
     actionMapPathArray.every((path) => {
       if (
-        typeof currentPath !== "undefined" &&
+        typeof currentPath !== 'undefined' &&
         Object.prototype.hasOwnProperty.call(currentPath, path)
       ) {
         currentPath = (currentPath as Record<string, unknown>)[path]
@@ -357,7 +359,7 @@ export default class Roller implements RollerInterface {
       return false
     })
 
-    if (currentPath !== false && typeof currentPath === "string") {
+    if (currentPath !== false && typeof currentPath === 'string') {
       return currentPath
     }
 
@@ -394,11 +396,11 @@ export default class Roller implements RollerInterface {
   getRandomValue(): number {
     // basic idea here was borrowed from:
     // http://dimitri.xyz/random-ints-from-random-bits/
-    // @ts-expect-error
-    if (typeof crypto?.randomBytes !== "undefined") {
-      // @ts-expect-error
+    // @ts-expect-error typescript hates msCrypto
+    if (typeof crypto?.randomBytes !== 'undefined') {
+      // @ts-expect-error typescript hates msCrypto
       return crypto.randomBytes(4).readUInt32LE(0)
-    } else if (typeof crypto?.getRandomValues !== "undefined") {
+    } else if (typeof crypto?.getRandomValues !== 'undefined') {
       return crypto.getRandomValues(new Uint32Array(1))[0]
     } else {
       return Math.floor(Math.random() * (MAX_RANGE - 1) + 1)
@@ -431,7 +433,7 @@ export default class Roller implements RollerInterface {
 
       if (counter >= MAX_ITERATIONS) {
         console.warn(
-          "Roller iterated too many times trying to ensure randomness"
+          'Roller iterated too many times trying to ensure randomness'
         )
 
         break
