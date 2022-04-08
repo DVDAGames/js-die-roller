@@ -18,8 +18,10 @@
   "author": "DVDA Games",
   "license": "ISC",
   "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ],
     "*.{ts,tsx,js,jsx,md,mdx}": [
-      "eslint --fix",
       "prettier --write"
     ]
   },
