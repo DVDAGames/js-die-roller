@@ -1,10 +1,10 @@
-let crypto: Crypto
+// Try to get the global crypto object
+let crypto
 
-try {
-  crypto = require("crypto")
-} catch {
-  crypto =
-    globalThis?.crypto ?? (globalThis?.msCrypto as unknown as Crypto) ?? {}
+if (typeof globalThis?.crypto !== 'undefined') {
+  crypto = globalThis.crypto
+} else if (globalThis?.msCrypto !== 'undefined') {
+  crypto = globalThis.msCrypto as unknown as Crypto
 }
 
 export default crypto

@@ -31,7 +31,7 @@ import {
 
 export type RollerMapper = (rolls: number[]) => number[]
 
-export type RollerDropper = (rolls: number[]) => number[][]
+export type RollerDropper = (rolls: number[]) => number[]
 
 export type RollerCounter = (count: number, rolls: number[]) => number[]
 
@@ -127,9 +127,9 @@ export default class Roller implements RollerInterface {
      * @returns {Array}
      * @memberof Roller.functions
      */
-    drop: (...rolls: number[][]): number[][] => {
-      return rolls.map((set) =>
-        set.sort((a, z) => z - a).slice(0, set.length - 1)
+    drop: (...rolls: number[][]): number[] => {
+      return this.flattenRolls(
+        rolls.map((set) => set.sort((a, z) => z - a).slice(0, set.length - 1))
       )
     },
 
@@ -140,8 +140,8 @@ export default class Roller implements RollerInterface {
      * @memberof Roller.functions
      */
     sum: (...rolls: number[][]): number[] => {
-      return rolls.map((set) =>
-        set.reduce((total, current) => total + current, 0)
+      return this.flattenRolls(
+        rolls.map((set) => set.reduce((total, current) => total + current, 0))
       )
     },
 
@@ -165,6 +165,18 @@ export default class Roller implements RollerInterface {
         )
       )
     },
+  }
+
+  flattenRolls(rolls: number[][] | number[]): number[] {
+    return rolls
+      .map((set) => {
+        if (Array.isArray(set)) {
+          return set.flat()
+        }
+
+        return set
+      })
+      .flat()
   }
 
   constructor(config: RollerConfig | RollerRollNotation) {
@@ -206,7 +218,7 @@ export default class Roller implements RollerInterface {
     if (Array.isArray(total)) {
       if (total.length > 1) {
         // @ts-expect-error figure out why we can't spread this
-        total = [this.functions.sum(...total)]
+        total = this.flattenRolls([this.functions.sum(...total)])
       } else {
         total = total[0]
       }
@@ -215,7 +227,7 @@ export default class Roller implements RollerInterface {
     const displayRoll = this.replaceVariables(roll)
 
     return {
-      total: total as number[],
+      total: this.flattenRolls(total as number[]),
       roll: displayRoll,
       breakdown,
     }
@@ -396,12 +408,14 @@ export default class Roller implements RollerInterface {
   getRandomValue(): number {
     // basic idea here was borrowed from:
     // http://dimitri.xyz/random-ints-from-random-bits/
-    // @ts-expect-error typescript hates msCrypto
-    if (typeof crypto?.randomBytes !== 'undefined') {
-      // @ts-expect-error typescript hates msCrypto
-      return crypto.randomBytes(4).readUInt32LE(0)
-    } else if (typeof crypto?.getRandomValues !== 'undefined') {
-      return crypto.getRandomValues(new Uint32Array(1))[0]
+    if (typeof crypto !== 'undefined') {
+      if (typeof crypto?.randomBytes !== 'undefined') {
+        return crypto.randomBytes(4).readUInt32LE(0)
+      } else if (typeof crypto?.getRandomValues !== 'undefined') {
+        return crypto.getRandomValues(new Uint32Array(1))[0]
+      } else {
+        return Math.floor(Math.random() * (MAX_RANGE - 1) + 1)
+      }
     } else {
       return Math.floor(Math.random() * (MAX_RANGE - 1) + 1)
     }
