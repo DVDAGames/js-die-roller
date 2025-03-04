@@ -14,7 +14,8 @@
     "demo": "node ./examples/demo.mjs",
     "prebuild": "npm run clean",
     "predemo": "npm run build",
-    "test": "jest"
+    "test": "jest --coverage",
+    "fairness": "node scripts/generate-fairness-stats.js"
   },
   "author": "DVDA Games",
   "license": "ISC",
