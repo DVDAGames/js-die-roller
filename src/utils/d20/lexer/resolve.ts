@@ -1,5 +1,11 @@
-import { D20Node, NodeType, OperatorNode, MethodNode } from "../types"
+import { D20Node, NodeType, OperatorNode, MethodNode } from '../types'
 
+/**
+ * Resolves nodes by setting up proper relationships between operators and their operands,
+ * and recursively resolving nested method parameters.
+ * @param nodes Array of D20Nodes to resolve
+ * @returns Resolved array of D20Nodes
+ */
 const resolve = (nodes: D20Node[]): D20Node[] => {
   return nodes
     .map((node, index, nodes) => {
@@ -19,8 +25,9 @@ const resolve = (nodes: D20Node[]): D20Node[] => {
           nodes[index + 1] = nullNode
         } else if (
           node.type === NodeType.METHOD &&
-          typeof (node as MethodNode)?.parameters !== "undefined"
+          Array.isArray((node as MethodNode)?.parameters)
         ) {
+          // Recursively resolve all parameters within the method
           ;(node as MethodNode).parameters = resolve(
             (node as MethodNode).parameters
           )

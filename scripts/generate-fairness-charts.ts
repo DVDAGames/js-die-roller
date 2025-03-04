@@ -40,7 +40,7 @@ async function generateCharts() {
         process.stdout.write(`Completed ${i} rolls...\r`)
       }
       const result = roller.roll(`1d${config.sides}`)
-      const value = result.total[0]
+      const value = result.total
       occurrences[value]++
     }
 
@@ -167,7 +167,7 @@ async function generateCombinedChart() {
     // Perform rolls
     for (let i = 0; i < ROLLS_PER_DIE; i++) {
       const result = roller.roll(`1d${size}`)
-      const value = result.total[0]
+      const value = result.total
       values[value - 1]++
     }
 

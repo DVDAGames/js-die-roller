@@ -73,7 +73,7 @@ async function generateImplementationStats(implementation, config) {
     let value
     if (implementation === IMPLEMENTATIONS.ROLLER) {
       const result = roller.roll(`1d${config.sides}`)
-      value = result.total[0]
+      value = result.total
     } else if (implementation === IMPLEMENTATIONS.MATH_RANDOM) {
       value = mathRandomDiceRoll(config.sides)
     }

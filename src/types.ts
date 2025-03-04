@@ -15,8 +15,10 @@ export interface RollerRoll {
 }
 
 export interface RollerRollResult {
-  total: number | number[]
-  roll: string
+  total: number
+  rolls: number[]
+  originalRolls: number[]
+  notation: string
   breakdown: RollerRoll[]
 }
 

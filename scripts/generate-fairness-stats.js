@@ -77,11 +77,11 @@ We measured the distribution of each possible value and calculated the chi-squar
 
     // Perform rolls
     for (let i = 0; i < config.rolls; i++) {
-      if (i % 10000 === 0 && i > 0) {
+      if (i % 10000 === 0) {
         process.stdout.write(`Completed ${i} rolls...\r`)
       }
       const result = roller.roll(`1d${config.sides}`)
-      const value = result.total[0]
+      const value = result.total
       occurrences[value]++
     }
 

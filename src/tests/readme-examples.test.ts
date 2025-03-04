@@ -10,9 +10,9 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = d20()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(1)
-    expect(result.total[0]).toBeLessThanOrEqual(20)
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(1)
+    expect(result.total).toBeLessThanOrEqual(20)
   })
 
   test('magic missiles example', () => {
@@ -20,9 +20,9 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = magicMissiles()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(4) // min: 3 × 1 + 1
-    expect(result.total[0]).toBeLessThanOrEqual(13) // max: 3 × 4 + 1
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(4) // min: 3 × 1 + 1
+    expect(result.total).toBeLessThanOrEqual(13) // max: 3 × 4 + 1
   })
 
   test('roll for stat example', () => {
@@ -30,13 +30,13 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = rollForStat()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
+    expect(typeof result.total).toBe('number')
 
     // The sum of the highest 3 values from 4d6
     // Min: 3 (1+1+1 after dropping lowest 1)
     // Max: 18 (6+6+6 after dropping lowest 6 or any other value)
-    expect(result.total[0]).toBeGreaterThanOrEqual(3)
-    expect(result.total[0]).toBeLessThanOrEqual(18)
+    expect(result.total).toBeGreaterThanOrEqual(3)
+    expect(result.total).toBeLessThanOrEqual(18)
 
     // Check breakdown has 4 original rolls
     expect(result.breakdown.length).toBe(4)
@@ -46,7 +46,7 @@ describe('README - Basic Rolls Examples', () => {
     const minRoll = Math.min(...allRolls)
     const sumWithoutMin =
       allRolls.reduce((sum, roll) => sum + roll, 0) - minRoll
-    expect(result.total[0]).toBe(sumWithoutMin)
+    expect(result.total).toBe(sumWithoutMin)
   })
 
   test('advantage example', () => {
@@ -54,14 +54,14 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = advantage()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(1)
-    expect(result.total[0]).toBeLessThanOrEqual(20)
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(1)
+    expect(result.total).toBeLessThanOrEqual(20)
 
     // Verify max logic by checking that the total equals the highest of the rolls
     const allRolls = result.breakdown.map((item) => Object.values(item)[0])
     const maxRoll = Math.max(...allRolls)
-    expect(result.total[0]).toBe(maxRoll)
+    expect(result.total).toBe(maxRoll)
   })
 
   test('disadvantage example', () => {
@@ -69,14 +69,14 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = disadvantage()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(1)
-    expect(result.total[0]).toBeLessThanOrEqual(20)
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(1)
+    expect(result.total).toBeLessThanOrEqual(20)
 
     // Verify min logic by checking that the total equals the lowest of the rolls
     const allRolls = result.breakdown.map((item) => Object.values(item)[0])
     const minRoll = Math.min(...allRolls)
-    expect(result.total[0]).toBe(minRoll)
+    expect(result.total).toBe(minRoll)
   })
 
   test('fireball example', () => {
@@ -84,9 +84,9 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = fireball()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(8) // min: 8 × 1
-    expect(result.total[0]).toBeLessThanOrEqual(48) // max: 8 × 6
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(8) // min: 8 × 1
+    expect(result.total).toBeLessThanOrEqual(48) // max: 8 × 6
     expect(result.breakdown.length).toBe(8) // Check we have 8 individual rolls
   })
 
@@ -95,15 +95,15 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = successes()
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(0) // min: no 6s rolled
-    expect(result.total[0]).toBeLessThanOrEqual(6) // max: all 6s rolled
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(0) // min: no 6s rolled
+    expect(result.total).toBeLessThanOrEqual(6) // max: all 6s rolled
 
     // Verify count logic by counting actual 6s in the breakdown
     const sixCount = result.breakdown.filter(
       (item) => Object.values(item)[0] === 6
     ).length
-    expect(result.total[0]).toBe(sixCount)
+    expect(result.total).toBe(sixCount)
   })
 
   test('damage example', () => {
@@ -112,9 +112,9 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = damage('d8', 2, 3)
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
-    expect(result.total[0]).toBeGreaterThanOrEqual(5) // min: 2 × 1 + 3
-    expect(result.total[0]).toBeLessThanOrEqual(19) // max: 2 × 8 + 3
+    expect(typeof result.total).toBe('number')
+    expect(result.total).toBeGreaterThanOrEqual(5) // min: 2 × 1 + 3
+    expect(result.total).toBeLessThanOrEqual(19) // max: 2 × 8 + 3
   })
 
   test('average example', () => {
@@ -123,10 +123,10 @@ describe('README - Basic Rolls Examples', () => {
 
     const result = average('d6', 4)
     expect(result).toBeDefined()
-    expect(Array.isArray(result.total)).toBe(true)
+    expect(typeof result.total).toBe('number')
     // Average of 4d6 should be between 1 and 6
-    expect(result.total[0]).toBeGreaterThanOrEqual(1)
-    expect(result.total[0]).toBeLessThanOrEqual(6)
+    expect(result.total).toBeGreaterThanOrEqual(1)
+    expect(result.total).toBeLessThanOrEqual(6)
   })
 
   // This test specifically needs its own instance to test constructor overloading
@@ -136,9 +136,9 @@ describe('README - Basic Rolls Examples', () => {
     // The result is stored directly on the instance when using constructor overloading
     expect(roller.result).toBeDefined()
     if (roller.result) {
-      expect(Array.isArray(roller.result.total)).toBe(true)
-      expect(roller.result.total[0]).toBeGreaterThanOrEqual(1)
-      expect(roller.result.total[0]).toBeLessThanOrEqual(20)
+      expect(typeof roller.result.total).toBe('number')
+      expect(roller.result.total).toBeGreaterThanOrEqual(1)
+      expect(roller.result.total).toBeLessThanOrEqual(20)
     }
   })
 })
@@ -218,30 +218,30 @@ describe('README - Advanced Interface Example', () => {
 
     // Test 1: Roll using variables directly (proficiency check)
     const profCheck = Fighter.roll('1d20 + $proficiency')
-    expect(profCheck.total[0]).toBeGreaterThanOrEqual(3) // min: 1 + 2
-    expect(profCheck.total[0]).toBeLessThanOrEqual(22) // max: 20 + 2
+    expect(profCheck.total).toBeGreaterThanOrEqual(3) // min: 1 + 2
+    expect(profCheck.total).toBeLessThanOrEqual(22) // max: 20 + 2
 
     // Test 2: Initiative roll
     const initiative = Fighter.roll('initiative')
-    expect(initiative.total[0]).toBeGreaterThanOrEqual(3) // min: 1 + 2 (dexMod)
-    expect(initiative.total[0]).toBeLessThanOrEqual(22) // max: 20 + 2
+    expect(initiative.total).toBeGreaterThanOrEqual(3) // min: 1 + 2 (dexMod)
+    expect(initiative.total).toBeLessThanOrEqual(22) // max: 20 + 2
 
     // Test 3: Longsword hit roll
     const longswordHit = Fighter.roll('longsword.hit')
-    expect(longswordHit.total[0]).toBeGreaterThanOrEqual(5) // min: 1 + 2 (proficiency) + 2 (strMod)
-    expect(longswordHit.total[0]).toBeLessThanOrEqual(24) // max: 20 + 2 + 2
+    expect(longswordHit.total).toBeGreaterThanOrEqual(5) // min: 1 + 2 (proficiency) + 2 (strMod)
+    expect(longswordHit.total).toBeLessThanOrEqual(24) // max: 20 + 2 + 2
 
     // Test 4: Longsword 2h damage roll
     const longsword2h = Fighter.roll('longsword.dmg.2h')
-    expect(longsword2h.total[0]).toBeGreaterThanOrEqual(3) // min: 1 + 2 (strMod)
-    expect(longsword2h.total[0]).toBeLessThanOrEqual(12) // max: 10 + 2
+    expect(longsword2h.total).toBeGreaterThanOrEqual(3) // min: 1 + 2 (strMod)
+    expect(longsword2h.total).toBeLessThanOrEqual(12) // max: 10 + 2
 
     // Test 5: STR saving throw
     const strSave = Fighter.roll('saves.STR')
-    expect(strSave.total[0]).toBeGreaterThanOrEqual(5) // min: 1 + 2 (strMod) + 2 (proficiency)
-    expect(strSave.total[0]).toBeLessThanOrEqual(24) // max: 20 + 2 + 2
+    expect(strSave.total).toBeGreaterThanOrEqual(5) // min: 1 + 2 (strMod) + 2 (proficiency)
+    expect(strSave.total).toBeLessThanOrEqual(24) // max: 20 + 2 + 2
 
     // Make sure the variable substitution works correctly
-    expect(strSave.roll).toBe('1d20 + 2 + 2')
+    expect(strSave.notation).toBe('1d20 + 2 + 2')
   })
 })
