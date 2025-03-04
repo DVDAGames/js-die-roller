@@ -235,3 +235,19 @@ npm run fairness
 This generates a [`FAIRNESS.md`](./FAIRNESS.md) file with detailed distribution
 charts and chi-square test results for all the common die sizes (`d4`, `d6`,
 `d8`, `d10`, `d12`, `d20`).
+
+Additionally, we've compared our implementation with the standard JavaScript
+`Math.random()` approach:
+
+```
+npm run compare-implementations
+```
+
+This generates an
+[`IMPLEMENTATION_COMPARISON.md`](./IMPLEMENTATION_COMPARISON.md) file that
+compares the statistical fairness of Roller against a typical `Math.random()`
+dice rolling implementation. The analysis, conducted with millions of dice
+rolls, shows that both implementations provide statistically fair dice rolls,
+with Roller offering particularly good performance for larger dice (d10, d20)
+that are common in tabletop RPGs. Roller also offers additional features and
+flexibility through its advanced API beyond just fair dice rolling.

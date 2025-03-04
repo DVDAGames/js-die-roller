@@ -15,7 +15,8 @@
     "prebuild": "npm run clean",
     "predemo": "npm run build",
     "test": "jest --coverage",
-    "fairness": "node scripts/generate-fairness-stats.js"
+    "fairness": "node scripts/generate-fairness-stats.js",
+    "compare-implementations": "node scripts/compare-dice-implementations.js"
   },
   "author": "DVDA Games",
   "license": "ISC",
