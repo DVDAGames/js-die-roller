@@ -181,6 +181,9 @@ describe('Dice Roller - Complex Combinations', () => {
     })
 
     const roll = roller.roll('max(2d20) + $bonus')
+
+    console.log(roll)
+
     expect(Array.isArray(roll.total)).toBe(true)
     expect(roll.total[0]).toBeGreaterThanOrEqual(3) // 1 + 2
     expect(roll.total[0]).toBeLessThanOrEqual(22) // 20 + 2
