@@ -148,10 +148,12 @@ describe('Dice Roller - Variables', () => {
     const roll = roller.roll('1d20 + $dex + $str')
     expect(Array.isArray(roll.total)).toBe(true)
 
+    console.log(roll)
+
     // The result should include the dex (3) and str (5) modifiers
     // plus a die roll of 1-20
-    expect(roll.total[0] - 8).toBeGreaterThanOrEqual(1) // Die value should be at least 1
-    expect(roll.total[0] - 8).toBeLessThanOrEqual(20) // Die value should be at most 20
+    expect(roll.total[0]).toBeGreaterThanOrEqual(9) // Die value should be at least 1
+    expect(roll.total[0]).toBeLessThanOrEqual(28) // Die value should be at most 20
 
     // Verify the values in the roll string
     expect(roll.roll).toBe('1d20 + 3 + 5')
@@ -181,8 +183,6 @@ describe('Dice Roller - Complex Combinations', () => {
     })
 
     const roll = roller.roll('max(2d20) + $bonus')
-
-    console.log(roll)
 
     expect(Array.isArray(roll.total)).toBe(true)
     expect(roll.total[0]).toBeGreaterThanOrEqual(3) // 1 + 2

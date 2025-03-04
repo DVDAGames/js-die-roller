@@ -227,19 +227,41 @@ export default class Roller implements RollerInterface {
     let totalNumbers: number[] = []
 
     if (Array.isArray(total)) {
-      // Process each item in the array
-      total.forEach((item) => {
-        if (Array.isArray(item)) {
-          // If it's an array, sum it up
-          const sum = item.reduce((acc: number, val: unknown) => {
-            return acc + (typeof val === 'number' ? val : 0)
-          }, 0)
-          totalNumbers.push(sum)
-        } else if (typeof item === 'number') {
-          // If it's a number, add directly
-          totalNumbers.push(item)
-        }
-      })
+      // Check if this is a multi-operation result that needs to be flattened and summed
+      if (total.length > 1) {
+        // For operations like '1d20 + 3 + 5', we get an array of operation results
+        // We need to sum all these values
+        const sum = total.reduce((acc: number, val: unknown) => {
+          if (Array.isArray(val)) {
+            // Sum the array values
+            return (
+              acc +
+              val.reduce((subAcc: number, subVal: unknown) => {
+                return subAcc + (typeof subVal === 'number' ? subVal : 0)
+              }, 0)
+            )
+          } else if (typeof val === 'number') {
+            return acc + val
+          }
+          return acc
+        }, 0)
+
+        totalNumbers.push(sum)
+      } else {
+        // Process each item in the array
+        total.forEach((item) => {
+          if (Array.isArray(item)) {
+            // If it's an array, sum it up
+            const sum = item.reduce((acc: number, val: unknown) => {
+              return acc + (typeof val === 'number' ? val : 0)
+            }, 0)
+            totalNumbers.push(sum)
+          } else if (typeof item === 'number') {
+            // If it's a number, add directly
+            totalNumbers.push(item)
+          }
+        })
+      }
     } else if (typeof total === 'number') {
       // If it's a single number, wrap in array
       totalNumbers = [total]
@@ -258,36 +280,21 @@ export default class Roller implements RollerInterface {
   }
 
   replaceVariables(notation: RollerRollNotation): RollerRollNotation {
-    let newNotation = notation
+    const newNotation = notation
 
-    // Create a copy to avoid modifying the regex's lastIndex state
-    const regex = new RegExp(VARIABLE_REGEX)
+    // Use the global flag to find all variables in a single pass
+    const regex = new RegExp(VARIABLE_REGEX, 'g')
 
-    // Check if there are any variables to replace
-    while (regex.test(newNotation)) {
-      // Reset the regex's lastIndex
-      regex.lastIndex = 0
-
-      // Find the NEXT variable in the new notation
-      const variableMatch = regex.exec(newNotation)
-
-      if (variableMatch !== null) {
-        const [match, variableName] = variableMatch
-
-        // Check if the variable exists
-        if (typeof this.variables?.[variableName] === 'undefined') {
-          throw new Error(`Variable "${variableName}" is not defined`)
-        }
-
-        // Replace only this occurrence
-        newNotation = newNotation.replace(
-          match,
-          this.variables[variableName].toString()
-        )
+    // Find all variables and replace them
+    return newNotation.replace(regex, (match: string, variableName: string) => {
+      // Check if the variable exists
+      if (typeof this.variables?.[variableName] === 'undefined') {
+        throw new Error(`Variable "${variableName}" is not defined`)
       }
-    }
 
-    return newNotation
+      // Return the variable value
+      return this.variables[variableName].toString()
+    })
   }
 
   operate(syntax: OperatorNode): number[] {
