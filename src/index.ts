@@ -215,9 +215,13 @@ export default class Roller implements RollerInterface {
 
     const roll = this.checkRollMap(notation)
 
+    // Replace variables in the roll notation before executing
+    const processedRoll = this.replaceVariables(roll)
+
     const breakdown = this.rolls
 
-    const total = this.execute(d20(notation).body)
+    // Use the processed roll with variables replaced
+    const total = this.execute(d20(processedRoll).body)
 
     // Normalize total to be an array of numbers
     let totalNumbers: number[] = []
@@ -246,11 +250,9 @@ export default class Roller implements RollerInterface {
       totalNumbers = [0] // Default to 0 if somehow we got no valid numbers
     }
 
-    const displayRoll = this.replaceVariables(roll)
-
     return {
       total: totalNumbers,
-      roll: displayRoll,
+      roll: processedRoll,
       breakdown,
     }
   }
@@ -411,6 +413,15 @@ export default class Roller implements RollerInterface {
 
     if (currentPath !== false && typeof currentPath === 'string') {
       return currentPath
+    }
+
+    // Check if this looks like a named roll but wasn't found in the map
+    if (
+      action.includes('.') || // If it has a dot notation like "xbow.hit"
+      (actionMapPathArray.length === 1 && // If it's a simple name
+        !/\d|[+\-*/()]/.test(action)) // And doesn't contain numbers or operators
+    ) {
+      throw new Error(`Roll mapping "${action}" is not defined`)
     }
 
     // if we didn't find a path that could be resolved, we'll just return the provided String
