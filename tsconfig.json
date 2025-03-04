@@ -11,6 +11,9 @@
     "module": "esnext",
     "outDir": "lib"
   },
+  "parserOptions": {
+    "extraFileExtensions": [".mjs"]
+  },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "lib"]
+  "exclude": ["node_modules", "lib", "examples"]
 }
