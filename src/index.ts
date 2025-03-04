@@ -88,23 +88,60 @@ export default class Roller implements RollerInterface {
    */
   functions: RollerInterface['functions'] = {
     /**
-     * Simple method for returning the maximum value from an Array of rolls
+     * Method for returning the maximum value from an Array of rolls
+     * or the array with the maximum sum when multiple arrays are provided
      * @param {...Number} rolls Any number of rolled values
-     * @returns {Number}
+     * @returns {Number[]} The maximum value or array with maximum sum
      * @memberof Roller.functions
      */
-    max: (...rolls: number[][]): number => {
-      return Math.max(...rolls.flat())
+    max: (...rolls: number[][]): number[] => {
+      // Ensure we're working with arrays of numbers
+      const processedRolls = rolls.map((set) => {
+        // If the set contains arrays, flatten it
+        if (set.some((item) => Array.isArray(item))) {
+          return set.flat().filter((item) => typeof item === 'number')
+        }
+        return set
+      })
+
+      // If we have only one array, return the maximum value
+      if (processedRolls.length === 1) {
+        const maxValue = Math.max(...processedRolls[0])
+        return [maxValue]
+      }
+
+      // If we have multiple arrays, return the array with the highest sum
+      const sums = processedRolls.map((set) =>
+        set.reduce(
+          (total, roll) => total + (typeof roll === 'number' ? roll : 0),
+          0
+        )
+      )
+      const highestSumIndex = sums.indexOf(Math.max(...sums))
+
+      return processedRolls[highestSumIndex]
     },
 
     /**
-     * Simple method for returning the minimum value from an Array of rolls
+     * Method for returning the minimum value from an Array of rolls
+     * or the array with the minimum sum when multiple arrays are provided
      * @param {...Number} rolls Any number of rolled values
-     * @returns {Number}
+     * @returns {Number[]} The minimum value or array with minimum sum
      * @memberof Roller.functions
      */
-    min: (...rolls: number[][]): number => {
-      return Math.min(...rolls.flat())
+    min: (...rolls: number[][]): number[] => {
+      // If we have only one array, return the minimum value
+      if (rolls.length === 1) {
+        return [Math.min(...rolls[0])]
+      }
+
+      // If we have multiple arrays, return the array with the lowest sum
+      const sums = rolls.map((set) =>
+        set.reduce((total, roll) => total + roll, 0)
+      )
+      const lowestSumIndex = sums.indexOf(Math.min(...sums))
+
+      return rolls[lowestSumIndex]
     },
 
     /**
@@ -115,34 +152,108 @@ export default class Roller implements RollerInterface {
      */
     avg: (...rolls: number[][]): number[] => {
       return rolls.map((set) =>
-        Math.floor(
-          set.reduce((total, roll) => total + roll, 0) / rolls[0].length
-        )
+        Math.floor(set.reduce((total, roll) => total + roll, 0) / set.length)
       )
     },
 
     /**
-     * Simple method for dropping the lowest value from an Array of rolls
+     * Method for dropping the lowest value from each array of rolls or
+     * returning all but the lowest value when multiple arrays are provided
      * @param {...Number} rolls Any number of rolled values
-     * @returns {Array}
+     * @returns {Array} The rolls with the lowest value(s) dropped
      * @memberof Roller.functions
      */
     drop: (...rolls: number[][]): number[] => {
-      return this.flattenRolls(
-        rolls.map((set) => set.sort((a, z) => z - a).slice(0, set.length - 1))
+      // Process the rolls to ensure we're working with numbers
+      const processedRolls = rolls.map((set) => {
+        // If the set contains arrays or non-numeric values, process it
+        if (
+          set.some((item) => Array.isArray(item) || typeof item !== 'number')
+        ) {
+          // Flatten arrays and convert to numbers where possible
+          return set.flat().map((item) => {
+            if (typeof item === 'number') {
+              return item
+            }
+            // Try to convert strings to numbers
+            if (typeof item === 'string') {
+              const num = Number(item)
+              return isNaN(num) ? 0 : num
+            }
+            return 0
+          })
+        }
+        return set
+      })
+
+      // If we have only one array, drop the lowest value from it
+      if (processedRolls.length === 1) {
+        const set = [...processedRolls[0]] // Make a copy to avoid mutation
+
+        // Find the lowest value
+        const lowestValue = Math.min(...set)
+
+        // Create a new array without the lowest value (only remove one occurrence)
+        const lowestIndex = set.indexOf(lowestValue)
+        if (lowestIndex !== -1) {
+          set.splice(lowestIndex, 1)
+        }
+
+        // Return the remaining values
+        return set
+      }
+
+      // If we have multiple arrays, return all arrays except the one with the lowest sum
+      const sums = processedRolls.map((set) =>
+        set.reduce(
+          (total, roll) => total + (typeof roll === 'number' ? roll : 0),
+          0
+        )
       )
+      const lowestSumIndex = sums.indexOf(Math.min(...sums))
+
+      // Filter out the array with the lowest sum
+      return processedRolls
+        .filter((_, index) => index !== lowestSumIndex)
+        .flat()
     },
 
     /**
-     * Simple method for adding values in an Array of rolls
+     * Method for summing values in an Array of rolls
      * @param {...Number} rolls Any number of rolled values
-     * @returns {Array}
+     * @returns {Array} Array containing the sum of each parameter
      * @memberof Roller.functions
      */
     sum: (...rolls: number[][]): number[] => {
-      return this.flattenRolls(
-        rolls.map((set) => set.reduce((total, current) => total + current, 0))
-      )
+      // Manually flatten nested arrays since we can't use this.flattenRolls from arrow function
+      const flattenedSet = rolls
+        .flat(Infinity)
+        .filter((item) => typeof item === 'number') as number[]
+
+      // If we have numbers, sum them
+      if (flattenedSet.length > 0) {
+        const result = [
+          flattenedSet.reduce((total, current) => total + current, 0),
+        ]
+        return result
+      }
+
+      // Fall back to original behavior
+      const result = rolls.map((set) => {
+        if (Array.isArray(set) && set.length > 0) {
+          if (typeof set[0] === 'number') {
+            return set[0]
+          } else if (Array.isArray(set[0])) {
+            // Recursively flatten and sum nested arrays
+            const flattened = set
+              .flat(Infinity)
+              .filter((item) => typeof item === 'number')
+            return flattened.reduce((sum, val) => sum + val, 0)
+          }
+        }
+        return set as unknown as number
+      })
+      return result
     },
 
     /**
@@ -213,69 +324,63 @@ export default class Roller implements RollerInterface {
   roll(notation: RollerRollNotation): RollerRollResult {
     this.rolls = []
 
-    const roll = this.checkRollMap(notation)
+    const rollNotation = this.checkRollMap(notation)
 
     // Replace variables in the roll notation before executing
-    const processedRoll = this.replaceVariables(roll)
+    const processedRoll = this.replaceVariables(rollNotation)
 
     const breakdown = this.rolls
 
     // Use the processed roll with variables replaced
-    const total = this.execute(d20(processedRoll).body)
+    const executionResult = this.execute(d20(processedRoll).body)
 
     // Normalize total to be an array of numbers
     let totalNumbers: number[] = []
 
-    if (Array.isArray(total)) {
-      // Check if this is a multi-operation result that needs to be flattened and summed
-      if (total.length > 1) {
-        // For operations like '1d20 + 3 + 5', we get an array of operation results
-        // We need to sum all these values
-        const sum = total.reduce((acc: number, val: unknown) => {
-          if (Array.isArray(val)) {
-            // Sum the array values
-            return (
-              acc +
-              val.reduce((subAcc: number, subVal: unknown) => {
-                return subAcc + (typeof subVal === 'number' ? subVal : 0)
-              }, 0)
-            )
-          } else if (typeof val === 'number') {
-            return acc + val
-          }
-          return acc
-        }, 0)
+    // Keep track of all original dice rolls before any modifications
+    let originalRolls: number[] = []
 
-        totalNumbers.push(sum)
-      } else {
-        // Process each item in the array
-        total.forEach((item) => {
+    // Collect all original dice rolls from the breakdown
+    breakdown.forEach((roll) => {
+      Object.values(roll).forEach((value) => {
+        if (typeof value === 'number') {
+          originalRolls.push(value)
+        }
+      })
+    })
+
+    // Handle different types of return values from execution
+    if (Array.isArray(executionResult)) {
+      // Recursively extract numbers from nested arrays
+      const extractNumbers = (arr: any[]): void => {
+        arr.forEach((item) => {
           if (Array.isArray(item)) {
-            // If it's an array, sum it up
-            const sum = item.reduce((acc: number, val: unknown) => {
-              return acc + (typeof val === 'number' ? val : 0)
-            }, 0)
-            totalNumbers.push(sum)
+            extractNumbers(item)
           } else if (typeof item === 'number') {
-            // If it's a number, add directly
             totalNumbers.push(item)
           }
         })
       }
-    } else if (typeof total === 'number') {
-      // If it's a single number, wrap in array
-      totalNumbers = [total]
+
+      extractNumbers(executionResult)
+    } else if (typeof executionResult === 'number') {
+      totalNumbers = [executionResult]
     }
 
-    // If there's only one roll, just return it directly
+    // If there's no numbers, default to [0]
     if (totalNumbers.length === 0) {
       totalNumbers = [0] // Default to 0 if somehow we got no valid numbers
     }
 
+    // Calculate the final total by summing all values in totalNumbers
+    const finalTotal = totalNumbers.reduce((sum, num) => sum + num, 0)
+
     return {
-      total: totalNumbers,
-      roll: processedRoll,
+      notation: processedRoll,
       breakdown,
+      total: finalTotal,
+      rolls: totalNumbers,
+      originalRolls: originalRolls,
     }
   }
 
@@ -302,11 +407,42 @@ export default class Roller implements RollerInterface {
       const operands = this.execute(syntax.operands)
 
       if (operands.length === 2) {
-        const operand1 = (operands as [number, number])[0]
+        let operand1 = (operands as [unknown, unknown])[0]
+        let operand2 = (operands as [unknown, unknown])[1]
 
-        const operand2 = (operands as [number, number])[1]
+        // Handle deeply nested arrays by recursively flattening
+        const flattenDeep = (arr: any): number[] => {
+          if (!Array.isArray(arr)) {
+            return [Number(arr)]
+          }
 
-        return this.performOperation(syntax.method, operand1, operand2)
+          let result: number[] = []
+          arr.forEach((item) => {
+            if (Array.isArray(item)) {
+              result = result.concat(flattenDeep(item))
+            } else if (typeof item === 'number') {
+              result.push(item)
+            }
+          })
+          return result
+        }
+
+        // Flatten and sum operands if they're arrays
+        if (Array.isArray(operand1)) {
+          const flattened = flattenDeep(operand1)
+          operand1 = flattened.reduce((sum, val) => sum + val, 0)
+        }
+
+        if (Array.isArray(operand2)) {
+          const flattened = flattenDeep(operand2)
+          operand2 = flattened.reduce((sum, val) => sum + val, 0)
+        }
+
+        return this.performOperation(
+          syntax.method,
+          operand1 as number,
+          operand2 as number
+        )
       }
     }
 
@@ -318,23 +454,34 @@ export default class Roller implements RollerInterface {
     operandOne: number | number[],
     operandTwo: number | number[]
   ): number[] {
-    if (Array.isArray(operandOne)) {
-      operandOne = operandOne.reduce((total, value) => total + value, 0)
+    // Ensure we're working with numbers
+    let op1 = operandOne
+    let op2 = operandTwo
+
+    // Handle array operands
+    if (Array.isArray(op1)) {
+      op1 = op1.reduce((total, value) => total + value, 0)
+    } else if (typeof op1 !== 'number') {
+      op1 = Number(op1) || 0
     }
 
-    if (Array.isArray(operandTwo)) {
-      operandTwo = operandTwo.reduce((total, value) => total + value, 0)
+    if (Array.isArray(op2)) {
+      op2 = op2.reduce((total, value) => total + value, 0)
+    } else if (typeof op2 !== 'number') {
+      op2 = Number(op2) || 0
     }
 
     switch (operation) {
       case OPERATIONS.ADD:
-        return [operandOne + operandTwo]
+        return [op1 + op2]
       case OPERATIONS.SUBTRACT:
-        return [operandOne - operandTwo]
+        return [op1 - op2]
       case OPERATIONS.MULTIPLY:
-        return [operandOne * operandTwo]
+        return [op1 * op2]
       case OPERATIONS.DIVIDE:
-        return [operandOne / operandTwo]
+        return [op1 / op2]
+      default:
+        return [op1] // Default to just returning the first operand
     }
   }
 
@@ -359,30 +506,52 @@ export default class Roller implements RollerInterface {
     }
   }
 
+  /**
+   * Process a method node by executing its parameters and applying the appropriate function
+   * @param {MethodNode} node The method node to process
+   * @returns {Array} The results of the method call
+   */
   useMethod(node: MethodNode): number[][] {
     const parameters = this.execute(node.parameters)
 
     if (node.value !== null && Array.isArray(parameters)) {
-      // @ts-expect-error figure out why we can't spread here
-      return this.functions[node.value.toString()](...parameters)
+      // Each parameter might be a single number or an array of numbers
+      // Make sure each parameter is an array before spreading
+      const processedParams = parameters.map((param) =>
+        Array.isArray(param) ? param : [param as number]
+      ) as number[][]
+
+      // Apply the function with all parameters
+      // @ts-ignore - We know this is valid based on our function definitions
+      const result = this.functions[node.value.toString()](...processedParams)
+
+      // Make sure we return as number[][]
+      if (Array.isArray(result)) {
+        return [result]
+      } else {
+        return [[result]]
+      }
     }
 
     return []
   }
 
   execute(syntax: D20Node[]): unknown[] {
-    return syntax.map((definition) => {
-      switch (definition.type) {
-        case NodeType.OPERATOR:
-          return this.operate(definition as OperatorNode)
+    return syntax.map((node) => {
+      switch (node.type) {
         case NodeType.ROLL:
-          return this.rollDie(definition as RollNode)
+          return this.rollDie(node as RollNode)
         case NodeType.METHOD:
-          return this.useMethod(definition as MethodNode)
+          const result = this.useMethod(node as MethodNode)
+          return result
         case NodeType.NUMBER:
+          return this.numerate(node as NumberNode)
         case NodeType.VARIABLE:
+          return this.numerate(node as VariableNode)
+        case NodeType.OPERATOR:
+          return this.operate(node as OperatorNode)
         default:
-          return this.numerate(definition as VariableNode | NumberNode)
+          return node.value
       }
     })
   }
@@ -446,7 +615,6 @@ export default class Roller implements RollerInterface {
 
     for (let roll = 0; roll < node.dice; roll++) {
       const thisRoll = this.generateRoll(this.options.defaultMinRoll, node.die)
-
       rolls.push(thisRoll)
 
       this.rolls.push({

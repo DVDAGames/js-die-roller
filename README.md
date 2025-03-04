@@ -32,25 +32,25 @@ arithmetic with modifiers, and comes with out of the box support for several
 common TTRPG functions.
 
 ```ts
-const d20 = () => dice.roll('1d20').result
+const d20 = () => dice.roll('1d20')
 
-const magicMissiles = () => dice.roll('3d4 + 1').result
+const magicMissiles = () => dice.roll('3d4 + 1')
 
-const rollForStat = () => dice.roll('drop(4d6)').result
+const rollForStat = () => dice.roll('drop(4d6)')
 
-const advantage = () => dice.roll('max(2d20)').result
+const advantage = () => dice.roll('max(2d20)')
 
-const disadvantage = () => dice.roll('min(2d20)').result
+const disadvantage = () => dice.roll('min(2d20)')
 
-const fireball = () => dice.roll('8d6').result
+const fireball = () => dice.roll('8d6')
 
-const successes = () => dice.roll('count(6, 6d6)').result
+const successes = () => dice.roll('count(6, 6d6)')
 
 const damage = (dieSize, numberOfDice, modifier) =>
-  dice.roll(`sum(${numberOfDice}${dieSize} + ${modifier})`).result
+  dice.roll(`sum(${numberOfDice}${dieSize} + ${modifier})`)
 
 const average = (dieSize: RollerDieNotation, numberOfDice = 1) =>
-  dice.roll(`avg(${numberOfDice}${dieSize})`).result
+  dice.roll(`avg(${numberOfDice}${dieSize})`)
 ```
 
 **Note**: Roller comes with support for the standard array of TTRPG dice ()`d4`,
@@ -95,10 +95,10 @@ const statsGenerator = new Roller();
 const statNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
 // roll 4d6 drop the lowest to get a stat
-const stat = () => statsGenerator.roll('drop(4d6)').result
+const stat = () => statsGenerator.roll('drop(4d6)')
 
 // roll 7 stats
-const statRolls = Array(statNames.length + 1).fill().map(() => stat().total[0]).sort()
+const statRolls = Array(statNames.length + 1).fill().map(() => stat().total).sort()
 
 // drop the lowest roll
 statRolls.pop()
@@ -154,19 +154,53 @@ Here are some examples:
 
 ```ts
 // something came up that we're proficient at, but don't have a specific stat tied to
-Fighter.roll('1d20 + $proficiency').result.total[0]
+Fighter.roll('1d20 + $proficiency').total
 
 // it's time for some combat; roll initiative
-Fighter.roll('initiative').result.total[0]
+Fighter.roll('initiative').total
 
 // let's try to hit the enemy
-Fighter.roll('longsword.hit').result.total[0]
+Fighter.roll('longsword.hit').total
 
 // we hit; roll for damage
-Fighter.roll('longsword.dmg.2h').result.total[0]
+Fighter.roll('longsword.dmg.2h').total
 
 // the enemy druid is trying to entangle us; make a saving throw
-Fighter.roll('saves.STR').result.total[0]
+Fighter.roll('saves.STR').total
+```
+
+## Result Object
+
+When you call `roll()`, it returns a `RollerRollResult` object with the
+following properties:
+
+```ts
+interface RollerRollResult {
+  // The final aggregated value as a single number
+  total: number
+  // The array of rolls after any modifications (drop, min, max)
+  rolls: number[]
+  // The original array of all dice rolls before any modifications
+  originalRolls: number[]
+  // The notation used for the roll
+  notation: string
+  // Detailed breakdown for each roll
+  breakdown: RollerRoll[]
+}
+```
+
+This consistent return structure makes it easy to work with roll results
+regardless of what operations were performed:
+
+```ts
+// Get a single total value
+const damage = dice.roll('8d6').total
+
+// Get individual dice results after operations
+const statRolls = dice.roll('drop(4d6)').rolls // [5, 3, 6] (lowest dropped)
+
+// Get all original dice values before any operations
+const allDice = dice.roll('drop(4d6)').originalRolls // [1, 5, 3, 6] (includes lowest)
 ```
 
 ## Why another die rolling implementation?
@@ -214,9 +248,6 @@ Here are some examples rolls to test:
 
 - `xbow.hit`
 - `sacred-flame.dmg`
-- `initiative`
-- `whip.crit`
-- `max(2d20)`
 
 ## Roll Fairness
 
