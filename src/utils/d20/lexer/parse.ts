@@ -1,11 +1,11 @@
-import map from "./map"
+import map from './map'
 
-import { methodRegex } from "../constants/expressions"
+import { methodRegex } from '../constants/expressions'
 
-import { MethodNode, NodeType } from "../types"
+import { MethodNode, NodeType } from '../types'
 
 // find defined methods in syntax string and replace them with lexical definitions
-const parse = (syntax: string = "", methods: MethodNode[] = []): string => {
+const parse = (syntax = '', methods: MethodNode[] = []): string => {
   while (methodRegex.test(syntax)) {
     const foundMethod = methodRegex.exec(syntax)
 

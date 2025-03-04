@@ -158,9 +158,13 @@ export default class Roller implements RollerInterface {
         DEFAULT_COUNT,
       ...rolls: number[][]
     ): number[] => {
+      const numberToCount = Array.isArray(number) ? number[0] : number
+
+      // Fall back to the original behavior if there are no dice rolls
       return rolls.map((set) =>
         set.reduce(
-          (totalCount, roll) => (roll === number ? totalCount + 1 : totalCount),
+          (totalCount, roll) =>
+            roll === numberToCount ? totalCount + 1 : totalCount,
           0
         )
       )
@@ -179,7 +183,7 @@ export default class Roller implements RollerInterface {
       .flat()
   }
 
-  constructor(config: RollerConfig | RollerRollNotation) {
+  constructor(config: RollerConfig | RollerRollNotation = {}) {
     // polymorphic handing of Roller to allow user to just pass a simple die
     // notation and receive a result as this.result
     if (typeof config === 'string') {
@@ -213,21 +217,39 @@ export default class Roller implements RollerInterface {
 
     const breakdown = this.rolls
 
-    let total = this.execute(d20(notation).body)
+    const total = this.execute(d20(notation).body)
+
+    // Normalize total to be an array of numbers
+    let totalNumbers: number[] = []
 
     if (Array.isArray(total)) {
-      if (total.length > 1) {
-        // @ts-expect-error figure out why we can't spread this
-        total = this.flattenRolls([this.functions.sum(...total)])
-      } else {
-        total = total[0]
-      }
+      // Process each item in the array
+      total.forEach((item) => {
+        if (Array.isArray(item)) {
+          // If it's an array, sum it up
+          const sum = item.reduce((acc: number, val: unknown) => {
+            return acc + (typeof val === 'number' ? val : 0)
+          }, 0)
+          totalNumbers.push(sum)
+        } else if (typeof item === 'number') {
+          // If it's a number, add directly
+          totalNumbers.push(item)
+        }
+      })
+    } else if (typeof total === 'number') {
+      // If it's a single number, wrap in array
+      totalNumbers = [total]
+    }
+
+    // If there's only one roll, just return it directly
+    if (totalNumbers.length === 0) {
+      totalNumbers = [0] // Default to 0 if somehow we got no valid numbers
     }
 
     const displayRoll = this.replaceVariables(roll)
 
     return {
-      total: this.flattenRolls(total as number[]),
+      total: totalNumbers,
       roll: displayRoll,
       breakdown,
     }
@@ -236,17 +258,29 @@ export default class Roller implements RollerInterface {
   replaceVariables(notation: RollerRollNotation): RollerRollNotation {
     let newNotation = notation
 
-    while (VARIABLE_REGEX.test(newNotation)) {
-      const variableMatch = VARIABLE_REGEX.exec(notation)
+    // Create a copy to avoid modifying the regex's lastIndex state
+    const regex = new RegExp(VARIABLE_REGEX)
+
+    // Check if there are any variables to replace
+    while (regex.test(newNotation)) {
+      // Reset the regex's lastIndex
+      regex.lastIndex = 0
+
+      // Find the NEXT variable in the new notation
+      const variableMatch = regex.exec(newNotation)
 
       if (variableMatch !== null) {
         const [match, variableName] = variableMatch
 
+        // Check if the variable exists
+        if (typeof this.variables?.[variableName] === 'undefined') {
+          throw new Error(`Variable "${variableName}" is not defined`)
+        }
+
+        // Replace only this occurrence
         newNotation = newNotation.replace(
           match,
-          typeof this.variables?.[variableName] !== 'undefined'
-            ? this.variables[variableName].toString()
-            : variableName
+          this.variables[variableName].toString()
         )
       }
     }
@@ -301,10 +335,14 @@ export default class Roller implements RollerInterface {
         const variableName = node.value?.toString().substring(1)
 
         if (typeof variableName !== 'undefined') {
-          return [this.variables[variableName]]
+          if (typeof this.variables[variableName] !== 'undefined') {
+            return [this.variables[variableName]]
+          }
+
+          throw new Error(`Variable "${variableName}" is not defined`)
         }
 
-        return [node.value]
+        throw new Error('Invalid variable name')
       }
       case NodeType.NUMBER:
       default:
