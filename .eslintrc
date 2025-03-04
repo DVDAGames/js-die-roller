@@ -1,5 +1,6 @@
 {
   "extends": [
+    "plugin:markdown/recommended-legacy",
     "plugin:@typescript-eslint/recommended",
     "plugin:markdown/recommended",
     "standard-with-typescript",
@@ -8,6 +9,7 @@
   "plugins": ["markdown", "@typescript-eslint"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "extraFileExtensions": [".mjs", ".md"]
   }
 }

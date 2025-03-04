@@ -2,6 +2,31 @@
 
 Simple, intuitive die rolling in a JavaScript Class with better random seeding.
 
+## Getting Started
+
+Install the Roller library from npm:
+
+```sh
+npm install --save @dvdagames/js-die-roller
+```
+
+Import the Roller class and start slinging some dice:
+
+```ts
+import Roller from '@dvdagames/js-die-roller'
+
+const dice = new Roller()
+
+dice.roll('1d20')
+```
+
+You can also roll from the `Roller()` constructor directly if you won't need to
+reuse the Roller instance:
+
+```ts
+const roll = new Roller('1d20')
+```
+
 **NOTE**: Roller is currently in a Beta state and should be used with that in
 mind. Please file an [Issue](https://github.com/DVDAGames/js-die-roller/issues)
 for any bugs you discover.
@@ -63,8 +88,8 @@ rolling methodology, but is not currently supported:
 ## Examples
 
 You can check out the example Character implemented in the `examples/demo.js`
-file by running `yarn demo` and trying out some of his attacks, saves, and other
-rolls.
+file by running `npm run demo` and trying out some of his attacks, saves, and
+other rolls.
 
 Here are some examples rolls to test:
 
@@ -73,11 +98,13 @@ Here are some examples rolls to test:
 - `initiative`
 - `whip.crit`
 
-## Fairness Testing
+## Roll Fairness
 
 This library undergoes extensive statistical testing to ensure fair and random
-dice rolls. We use chi-square goodness-of-fit tests to verify that the
-distribution of results matches theoretical expectation.
+dice rolls. We use
+[chi-square goodness-of-fit](https://www.statology.org/chi-square-goodness-of-fit-test/)
+tests to verify that the distribution of results matches theoretical
+expectation.
 
 To view detailed statistical analysis:
 
@@ -85,10 +112,6 @@ To view detailed statistical analysis:
 npm run fairness
 ```
 
-This generates a `FAIRNESS.md` file with detailed distribution charts and
-chi-square test results for all common die types (d4, d6, d8, d10, d12, d20).
-
-For more information about the statistical fairness of dice rolls, see
-[FAIRNESS.md](FAIRNESS.md).
-
-## License
+This generates a [`FAIRNESS.md`](./FAIRNESS.md) file with detailed distribution
+charts and chi-square test results for all common die types (d4, d6, d8, d10,
+d12, d20).
