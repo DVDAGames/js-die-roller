@@ -148,8 +148,6 @@ describe('Dice Roller - Variables', () => {
     const roll = roller.roll('1d20 + $dex + $str')
     expect(Array.isArray(roll.total)).toBe(true)
 
-    console.log(roll)
-
     // The result should include the dex (3) and str (5) modifiers
     // plus a die roll of 1-20
     expect(roll.total[0]).toBeGreaterThanOrEqual(9) // Die value should be at least 1
