@@ -1,5 +1,15 @@
 export type RollerRollNotation = string
 
+export type RollerStandardDieSize = 4 | 6 | 8 | 10 | 12 | 20
+
+export type RollerEsotericDieSize = 100 | number
+
+export type RollerDieNotation =
+  | `d${RollerStandardDieSize}`
+  | `d${RollerEsotericDieSize}`
+
+export type RollerDieSize = RollerStandardDieSize | RollerEsotericDieSize
+
 export interface RollerRoll {
   [key: string]: number
 }
