@@ -1,22 +1,22 @@
-import getOperation from "../utils/getOperation"
+import getOperation from '../utils/getOperation'
 
 import {
   foundMethodRegex,
   rollRegex,
   mathRegex,
   variableRegex,
-} from "../constants/expressions"
+} from '../constants/expressions'
 
-import { D20Node, NodeType, MethodNode } from "../types"
+import { D20Node, NodeType, MethodNode } from '../types'
 
 // map over nodes in the syntax string and return a lexical definition of each
-const map = (syntax: string = "", methods: MethodNode[] = []): D20Node[] => {
+const map = (syntax = '', methods: MethodNode[] = []): D20Node[] => {
   return syntax
     .split(/\s+/)
     .filter((node) => node.length > 0)
     .map((node) => {
       // clear trailing commas
-      if (node[node.length - 1] === ",") {
+      if (node[node.length - 1] === ',') {
         node = node.substr(0, node.length - 1)
       }
 

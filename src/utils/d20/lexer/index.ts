@@ -1,12 +1,12 @@
-import parse from "./parse"
+import parse from './parse'
 
-import map from "./map"
+import map from './map'
 
-import resolve from "./resolve"
+import resolve from './resolve'
 
-import { D20Node, MethodNode } from "../types"
+import { D20Node, MethodNode } from '../types'
 
-const lex = (source: string = ""): D20Node[] => {
+const lex = (source = ''): D20Node[] => {
   const methods: MethodNode[] = []
 
   const syntax = parse(source, methods)
