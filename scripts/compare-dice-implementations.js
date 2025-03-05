@@ -8,14 +8,16 @@ import Roller from '../lib/index.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const ITERATIONS = 2500000
+
 // Configuration - increased by an order of magnitude (10x) for greater statistical significance
 const TEST_CONFIGURATIONS = [
-  { sides: 4, rolls: 400000, title: 'D4 Distribution' },
-  { sides: 6, rolls: 600000, title: 'D6 Distribution' },
-  { sides: 8, rolls: 800000, title: 'D8 Distribution' },
-  { sides: 10, rolls: 1000000, title: 'D10 Distribution' },
-  { sides: 12, rolls: 1200000, title: 'D12 Distribution' },
-  { sides: 20, rolls: 2000000, title: 'D20 Distribution' },
+  { sides: 4, rolls: ITERATIONS, title: 'D4 Distribution' },
+  { sides: 6, rolls: ITERATIONS, title: 'D6 Distribution' },
+  { sides: 8, rolls: ITERATIONS, title: 'D8 Distribution' },
+  { sides: 10, rolls: ITERATIONS, title: 'D10 Distribution' },
+  { sides: 12, rolls: ITERATIONS, title: 'D12 Distribution' },
+  { sides: 20, rolls: ITERATIONS, title: 'D20 Distribution' },
 ]
 
 // Implementation types

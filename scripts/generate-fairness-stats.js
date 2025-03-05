@@ -8,14 +8,16 @@ import Roller from '../lib/index.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const ITERATIONS = 2500000
+
 // Configuration
 const TEST_CONFIGURATIONS = [
-  { sides: 4, rolls: 40000, title: 'D4 Distribution' },
-  { sides: 6, rolls: 60000, title: 'D6 Distribution' },
-  { sides: 8, rolls: 80000, title: 'D8 Distribution' },
-  { sides: 10, rolls: 100000, title: 'D10 Distribution' },
-  { sides: 12, rolls: 120000, title: 'D12 Distribution' },
-  { sides: 20, rolls: 200000, title: 'D20 Distribution' },
+  { sides: 4, rolls: ITERATIONS, title: 'D4 Distribution' },
+  { sides: 6, rolls: ITERATIONS, title: 'D6 Distribution' },
+  { sides: 8, rolls: ITERATIONS, title: 'D8 Distribution' },
+  { sides: 10, rolls: ITERATIONS, title: 'D10 Distribution' },
+  { sides: 12, rolls: ITERATIONS, title: 'D12 Distribution' },
+  { sides: 20, rolls: ITERATIONS, title: 'D20 Distribution' },
 ]
 
 // Create ASCII bar chart

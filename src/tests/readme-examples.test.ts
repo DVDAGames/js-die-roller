@@ -1,5 +1,10 @@
 import Roller from '../index'
-import type { RollerDieNotation, RollerMap, RollerRollNotation } from '../types'
+import type {
+  RollerDieNotation,
+  RollerMap,
+  RollerRollNotation,
+  RollerRollResult,
+} from '../types'
 
 describe('README - Basic Rolls Examples', () => {
   // Create a single shared instance of Roller for all basic examples
@@ -16,13 +21,28 @@ describe('README - Basic Rolls Examples', () => {
   })
 
   test('magic missiles example', () => {
-    const magicMissiles = () => dice.roll('3d4 + 1')
+    const magicMissiles = (
+      spellLevel = 1,
+      extraMissiles = 0
+    ): RollerRollResult[] => {
+      const numberOfMissiles = 3 + extraMissiles + spellLevel - 1
 
-    const result = magicMissiles()
-    expect(result).toBeDefined()
-    expect(typeof result.total).toBe('number')
-    expect(result.total).toBeGreaterThanOrEqual(4) // min: 3 × 1 + 1
-    expect(result.total).toBeLessThanOrEqual(13) // max: 3 × 4 + 1
+      return Array.from({ length: numberOfMissiles }, () => {
+        return dice.roll(`1d4 + 1`)
+      })
+    }
+
+    const results = magicMissiles()
+
+    expect(results).toBeDefined()
+    expect(results.length).toBe(3)
+
+    results.forEach((result) => {
+      expect(result).toBeDefined()
+      expect(typeof result.total).toBe('number')
+      expect(result.total).toBeGreaterThanOrEqual(2)
+      expect(result.total).toBeLessThanOrEqual(5)
+    })
   })
 
   test('roll for stat example', () => {

@@ -16,7 +16,7 @@ import Roller from '../index'
 describe('Dice Rolling - Statistical Fairness', () => {
   // Number of rolls to perform for each test
   // Higher numbers give more accurate results but slow down the test
-  const ROLL_COUNT = 1000
+  const ROLL_COUNT = 10000
 
   // The following tests will verify that the distribution
   // is within this many standard deviations of the expected value
