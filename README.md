@@ -1,4 +1,4 @@
-# Roller
+# Roller (v3)
 
 Simple, intuitive die rolling in a JavaScript Class with better random seeding
 for all of your Tabletop Roleplaying Game (TTRPG) needs.
