@@ -30,7 +30,7 @@ export interface RollerOptions {
 }
 
 export interface RollerMap {
-  [key: string]: RollerRollNotation
+  [key: string]: RollerRollNotation | RollerMap
 }
 
 export interface RollerVariables {

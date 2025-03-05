@@ -34,7 +34,18 @@ common TTRPG functions.
 ```ts
 const d20 = () => dice.roll('1d20')
 
-const magicMissiles = () => dice.roll('3d4 + 1')
+const magicMissiles = (
+  spellLevel = 1,
+  extraMissiles = 0 //
+): RollerRollResult[] => {
+  // 3 missiles for spell level 1, +1 missile for each level upcast
+  // some items, effects, etc. can grant extra magic missiles
+  const numberOfMissiles = 3 + extraMissiles + spellLevel - 1
+
+  return Array.from({ length: numberOfMissiles }, () => {
+    return dice.roll(`1d4 + 1`)
+  })
+}
 
 const rollForStat = () => dice.roll('drop(4d6)')
 
@@ -57,6 +68,19 @@ const average = (dieSize: RollerDieNotation, numberOfDice = 1) =>
 `d6`, `d8`, `d10`, `d12`, & `d20`), as well as support for any arbitrary number
 prefixed with `d`, like `d2` for a coin flip or `d37` for whatever reason you
 might need it.
+
+Functions can also be chained in interesing ways, for example, to use a common
+method for generating player Ability Scores, like `4d6` drop the lowest 7 times
+and then drop the lowest score:
+
+```ts
+const statRoller = new Roller(
+  'drop(sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)))'
+)
+
+// get an array of ability scores like: [9, 16, 16, 15, 15, 13]
+const abilityScoreArray = statRoller.result.rolls
+```
 
 ### Functions
 
@@ -86,42 +110,57 @@ for a Tabletop Roleplaying Game (TTRPG) character or game mechanics by defining
 variables and named rolls.
 
 Let's see an exmaple of creating a Level 1 Fighter (DnD Fifth Edition) from
-scratch:
+scratch.
+
+Rather than just hardcoding the configuration object, let's also use Roller to
+generate our Ability Scores and then programmatically generate some variables
+and functions, like our ability score modifiers and saving throws:
 
 ```ts
-const statsGenerator = new Roller();
-
-// our character's stats
+// the ability scores in DnD Fifth Edition
 const statNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
-// roll 4d6 drop the lowest to get a stat
-const stat = () => statsGenerator.roll('drop(4d6)')
+// 4d6 drop the lowest
+// the method we're going to use for generating an ability score
+const statRoll = 'sum(drop(4d6))'
 
-// roll 7 stats
-const statRolls = Array(statNames.length + 1).fill().map(() => stat().total).sort()
+// roll 7 scores and drop the lowest
+// the method we're gong to use for generating our stat block
+const statsToRoll = statNames.length + 1
 
-// drop the lowest roll
-statRolls.pop()
+// generate a complext d20 syntax: drop(sum(drop(4d6)), sum(drop(4d6)), ...)
+const statsRoll = `drop(${Array.from({ length: statsToRoll })
+  .map(() => statRoll)
+  .join(', ')})`
 
-// get map value Array to stats
-const stats = statRolls.reduce((statsObject, statValue, index) => {
-  statsObject[index] = statValue
+// generate our new scores array
+const statsGenerator = new Roller(statsRoll)
+
+const abilityScores = statNames.reduce((scores, stat, index) => {
+  const score = statsGenerator.rolls[i]
+  scores[stat] = {
+    score: score,
+
+    // dnd5e stat modifiers are floor((STAT - 10) / 2)
+    modifier: Math.floor((score - 10) / 2),
+  }
+
+  return scores
 }, {})
-
-// dnd5e stat modifiers are floor((STAT - 10) / 2)
-const calculateModifier = (stat: number): number => Math.floor((stat - 10) / 2)
 
 const Fighter = new Roller({
   variables: {
     level: 1,
     proficiency: 2,
-    ...statsObject,
-    strMod: calculateModifer(statsObject.STR),
-    dexMod: calculateModifer(statsObject.DEX),
-    conMod: calculateModifer(statsObject.CON),
-    intMod: calculateModifer(statsObject.INT),
-    wisMod: calculateModifer(statsObject.WIS),
-    chaMod: calculateModifer(statsObject.CHA),
+    ...Object.entries(abilityScores).reduce((statBlock, [stat, values]) => {
+      statBlock = {
+        ...statBlock,
+        [stat.toLowerCase()]: values.score,
+        [`${stat.toLowerCase()}Mod`]: values.modifier,
+      }
+
+      return statBlock
+    }, {}),
   },
   map: {
     // when we use a variable in our roll, we always prefix it
@@ -132,17 +171,16 @@ const Fighter = new Roller({
       dmg: {
         '1h': '1d8 + $strMod',
         '2h': '1d10 + $strMod',
-      }
-    }
-    saves: {
-      STR: '1d20 + $strMod + $proficiency',
-      DEX: '1d20 + $conMod',
-      CON: '1d20 + $conMod + $proficiency',
-      INT: '1d20 + $intMod',
-      WIS: '1d20 + $wisMod',
-      CHA: '1d20 + $chaMod',
-    }
-  }
+      },
+    },
+    saves: statNames.reduce((saves, stat) => {
+      saves[stat] = `1d20 + $${stat.toLowerCase()}Mod${
+        proficiencies.includes(stat) ? ` + $proficiency` : ''
+      }`
+
+      return saves
+    }, {}),
+  },
 })
 ```
 
@@ -229,14 +267,6 @@ values and then further attempts to reduce bias in the randomly generated
 values, based on the great research about
 [Generating random integers from random bytes](http://dimitri.xyz/random-ints-from-random-bits/)
 from [Dimitri DeFigueiredo Ph.D.](http://dimitri.xyz/about/)
-
-### Limitations
-
-Complex function nesting with multiple parameters is not currently supported,
-but will be available in a future release. For example, the following pattern
-_could_ be used to generate a character's stat block using a common rolling
-methodology, but is not currently supported:
-`drop(sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)), sum(drop(4d6)))`
 
 ## Playground
 

@@ -175,6 +175,7 @@ export default class Roller implements RollerInterface {
             if (typeof item === 'number') {
               return item
             }
+
             // Try to convert strings to numbers
             if (typeof item === 'string') {
               const num = Number(item)
@@ -188,33 +189,20 @@ export default class Roller implements RollerInterface {
 
       // If we have only one array, drop the lowest value from it
       if (processedRolls.length === 1) {
-        const set = [...processedRolls[0]] // Make a copy to avoid mutation
-
-        // Find the lowest value
-        const lowestValue = Math.min(...set)
-
-        // Create a new array without the lowest value (only remove one occurrence)
-        const lowestIndex = set.indexOf(lowestValue)
-        if (lowestIndex !== -1) {
-          set.splice(lowestIndex, 1)
-        }
-
-        // Return the remaining values
-        return set
+        return [...processedRolls[0]].sort().reverse().slice(0, -1)
       }
 
       // If we have multiple arrays, return all arrays except the one with the lowest sum
-      const sums = processedRolls.map((set) =>
-        set.reduce(
-          (total, roll) => total + (typeof roll === 'number' ? roll : 0),
-          0
-        )
-      )
-      const lowestSumIndex = sums.indexOf(Math.min(...sums))
-
-      // Filter out the array with the lowest sum
       return processedRolls
-        .filter((_, index) => index !== lowestSumIndex)
+        .map((set) =>
+          set.reduce(
+            (total, roll) => total + (typeof roll === 'number' ? roll : 0),
+            0
+          )
+        )
+        .sort()
+        .reverse()
+        .slice(0, -1)
         .flat()
     },
 
@@ -227,7 +215,7 @@ export default class Roller implements RollerInterface {
     sum: (...rolls: number[][]): number[] => {
       // Manually flatten nested arrays since we can't use this.flattenRolls from arrow function
       const flattenedSet = rolls
-        .flat(Infinity)
+        .flat()
         .filter((item) => typeof item === 'number') as number[]
 
       // If we have numbers, sum them
