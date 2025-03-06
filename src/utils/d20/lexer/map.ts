@@ -43,10 +43,12 @@ const map = (syntax = '', methods: MethodNode[] = []): D20Node[] => {
         if (rollMatch !== null) {
           const [, numberOfDice, dieSize] = rollMatch
 
+          const parsedDieSize = parseInt(dieSize, 10)
+
           return {
             type: NodeType.ROLL,
             value: node,
-            die: parseInt(dieSize, 10),
+            die: !Number.isNaN(parsedDieSize) ? parsedDieSize : dieSize,
             dice: parseInt(numberOfDice, 10),
           }
         }
