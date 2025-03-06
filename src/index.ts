@@ -9,7 +9,10 @@ import {
   NodeType,
   NumberNode,
   RollNode,
+  DieSize,
 } from './utils/d20/types'
+
+import { FATE_DIE_SIZE_STRING, FATE_DIE_SIZE_INT } from './utils/d20/constants'
 
 import {
   DEFAULT_OPTIONS,
@@ -312,6 +315,8 @@ export default class Roller implements RollerInterface {
   roll(notation: RollerRollNotation): RollerRollResult {
     this.rolls = []
 
+    console.log('Roll Notation:', notation)
+
     const rollNotation = this.checkRollMap(notation)
 
     // Replace variables in the roll notation before executing
@@ -601,8 +606,24 @@ export default class Roller implements RollerInterface {
   rollDie(node: RollNode): number[] {
     const rolls: number[] = []
 
+    let dieSize = node.die
+
+    if (typeof node.die !== 'number') {
+      if (dieSize === FATE_DIE_SIZE_STRING) {
+        dieSize = FATE_DIE_SIZE_INT
+      } else {
+        console.error('Unexpected die size')
+        throw new Error(
+          `Roller cannot roll ${dieSize} dice. Pleae check your syntax and try again.`
+        )
+      }
+    }
+
     for (let roll = 0; roll < node.dice; roll++) {
-      const thisRoll = this.generateRoll(this.options.defaultMinRoll, node.die)
+      const thisRoll = this.generateRoll(
+        this.options.defaultMinRoll,
+        dieSize as number
+      )
       rolls.push(thisRoll)
 
       this.rolls.push({

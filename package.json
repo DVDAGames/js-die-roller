@@ -14,7 +14,7 @@
     "demo": "node ./examples/demo.mjs",
     "prebuild": "npm run clean",
     "predemo": "npm run build",
-    "test": "jest --coverage",
+    "test": "jest",
     "fairness": "node scripts/generate-fairness-stats.js",
     "compare-implementations": "node scripts/compare-dice-implementations.js"
   },
