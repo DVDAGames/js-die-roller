@@ -620,10 +620,15 @@ export default class Roller implements RollerInterface {
     }
 
     for (let roll = 0; roll < node.dice; roll++) {
-      const thisRoll = this.generateRoll(
+      let thisRoll = this.generateRoll(
         this.options.defaultMinRoll,
         dieSize as number
       )
+
+      if (node.die == FATE_DIE_SIZE_STRING) {
+        thisRoll = this.convertDieNumberToFateDieNumber(thisRoll)
+      }
+
       rolls.push(thisRoll)
 
       this.rolls.push({
@@ -632,6 +637,10 @@ export default class Roller implements RollerInterface {
     }
 
     return rolls
+  }
+
+  convertDieNumberToFateDieNumber(dienumber: number): number {
+    return dienumber < 3 ? -1 : dienumber < 5 ? 0 : 1
   }
 
   /**

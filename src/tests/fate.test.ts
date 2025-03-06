@@ -15,6 +15,10 @@ describe('Rolls fate dice', () => {
 
   // TODO: implement this test
   // test('Throws when trying to roll undefined die size', () => {
+  //   const roller = new Roller('4dT')
 
+  //   const result = roller.result!
+
+  //   expect(result).toThrowError()
   // })
 })
