@@ -1,8 +1,13 @@
+import { FATE_DIE_SYMBOL_VALUES, FATE_DIE_SYMBOLS } from './utils/d20/constants'
+
 export type RollerRollNotation = string
 
 export type RollerStandardDieSize = 4 | 6 | 8 | 10 | 12 | 20
 
 export type RollerEsotericDieSize = 100 | number
+
+export type RollerFateDieSymbol = (typeof FATE_DIE_SYMBOLS)[number]
+export type RollerFateDieValue = (typeof FATE_DIE_SYMBOL_VALUES)[number]
 
 export type RollerDieNotation =
   | `d${RollerStandardDieSize}`
@@ -18,6 +23,7 @@ export interface RollerRollResult {
   total: number
   rolls: number[]
   originalRolls: number[]
+  fateRolls: RollerFateDieSymbol[]
   notation: string
   breakdown: RollerRoll[]
 }
@@ -27,6 +33,7 @@ export interface RollerOptions {
   defaultMaxRoll: number
   defaultRoll: string
   defaultCount: number
+  defaultFateNeutralCount: 2 | 4
 }
 
 export interface RollerMap {
