@@ -15,6 +15,12 @@ const lex = (source = ''): D20Node[] => {
 
   const nodes = resolve(body)
 
+  if (nodes.length === 0) {
+    throw new Error(
+      `Roller cannot roll ${source}. Please check your syntax and try again.`
+    )
+  }
+
   return nodes
 }
 

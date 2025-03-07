@@ -1,4 +1,4 @@
-import { RollerOptions } from "../types"
+import { RollerOptions } from '../types'
 
 // Maximum number of times to check for valid random data
 export const MAX_ITERATIONS = 100
@@ -16,8 +16,9 @@ export const DEFAULT_MAX = 20
 export const DEFAULT_OPTIONS: RollerOptions = {
   defaultMinRoll: DEFAULT_MIN,
   defaultMaxRoll: DEFAULT_MAX,
-  defaultRoll: "1d20",
+  defaultRoll: '1d20',
   defaultCount: DEFAULT_COUNT,
+  defaultFateNeutralCount: 2,
 }
 
 // Regular Expression to identify variable strings like `$AGI`

@@ -22,7 +22,51 @@ import Roller, type { RollerDieNotation } from '@dvdagames/js-die-roller'
 
 const dice = new Roller()
 
-dice.roll('1d20');
+const { result } = dice.roll('1d20');
+```
+
+## Result Object
+
+When you call `roll()`, it returns a `RollerRollResult` object with the
+following properties:
+
+```ts
+interface RollerRollResult {
+  // The final aggregated value as a single number
+  total: number
+
+  // The array of rolls after any modifications (drop, min, max)
+  rolls: number[]
+
+  // The original array of all dice rolls before any modifications
+  originalRolls: number[]
+
+  // The original array of fate rolls before converting them to 1, 0, and -1
+  fateRolls: ('-' | '□' | '+')[]
+
+  // The notation used for the roll
+  notation: string
+
+  // Detailed breakdown for each roll
+  breakdown: RollerRoll[]
+}
+```
+
+#### Example Results
+
+```json
+{
+  "notation": "1d20",
+  "breakdown": [
+    {
+      "1d20: 0": 7
+    }
+  ],
+  "total": 7,
+  "rolls": [7],
+  "originalRolls": [7],
+  "fateRolls": []
+}
 ```
 
 ### Basic Rolls
@@ -32,7 +76,11 @@ arithmetic with modifiers, and comes with out of the box support for several
 common TTRPG functions.
 
 ```ts
-const d20 = () => dice.roll('1d20')
+// the d20 system (d4, d6, d8, d10, d12, d20)
+const d20 = () => dice.roll('1d20').result
+
+// the fate/fudge system (-, +, □)
+const fate = () => dice.roll(`4dF`).result
 
 const magicMissiles = (
   spellLevel = 1,
@@ -43,31 +91,31 @@ const magicMissiles = (
   const numberOfMissiles = 3 + extraMissiles + spellLevel - 1
 
   return Array.from({ length: numberOfMissiles }, () => {
-    return dice.roll(`1d4 + 1`)
+    return dice.roll(`1d4 + 1`).result
   })
 }
 
-const rollForStat = () => dice.roll('drop(4d6)')
+const rollForStat = () => dice.roll('drop(4d6)').result
 
-const advantage = () => dice.roll('max(2d20)')
+const advantage = () => dice.roll('max(2d20)').result
 
-const disadvantage = () => dice.roll('min(2d20)')
+const disadvantage = () => dice.roll('min(2d20)').result
 
-const fireball = () => dice.roll('8d6')
+const fireball = () => dice.roll('8d6').result
 
-const successes = () => dice.roll('count(6, 6d6)')
+const successes = () => dice.roll('count(6, 6d6)').result
 
 const damage = (dieSize, numberOfDice, modifier) =>
-  dice.roll(`sum(${numberOfDice}${dieSize} + ${modifier})`)
+  dice.roll(`sum(${numberOfDice}${dieSize} + ${modifier})`).result
 
 const average = (dieSize: RollerDieNotation, numberOfDice = 1) =>
-  dice.roll(`avg(${numberOfDice}${dieSize})`)
+  dice.roll(`avg(${numberOfDice}${dieSize})`).result
 ```
 
 **Note**: Roller comes with support for the standard array of TTRPG dice ()`d4`,
 `d6`, `d8`, `d10`, `d12`, & `d20`), as well as support for any arbitrary number
 prefixed with `d`, like `d2` for a coin flip or `d37` for whatever reason you
-might need it.
+might need it. You can use `dF` for Fate/Fudge Dice.
 
 Functions can also be chained in interesing ways, for example, to use a common
 method for generating player Ability Scores, like `4d6` drop the lowest 7 times
@@ -82,6 +130,32 @@ const statRoller = new Roller(
 const abilityScoreArray = statRoller.result.rolls
 ```
 
+### Fate/Fudge Dice
+
+By default the Fate/Fudge Dice in Roller are the standard balanced style with 2
+`+` faces, 2 `-` faces, and 2 blank faces (which are represented by `□`).
+
+When rolling standard dice, the `originalRolls` array will contain the dice
+before any `drop()`, `count()`, etc. has been applied, but when rolling fate
+dice `originalRolls` will be an empty array, and there will be a `fateRolls`
+array that has the `+`, `□`, and `-` symbols for each roll. The `rolls` array
+will incude the `+1`, `0`, and `-1` values associated with the `fateRolls`. The
+`total` value will be the sum of the `rolls` array.
+
+#### Alternate Fudge Dice
+
+If you want to enable the alternate Fudge Dice with 1 success face, 1 failure
+face, and 4 neutral faces, you can set the `defaultFateNeutralCount`, which is
+`2` by default, but can be set to `4`.
+
+```ts
+const fateDice = new Roller({
+  options: {
+    defaultFateNeutralCount: 4,
+  },
+})
+```
+
 ### Functions
 
 Roller comes loaded with several utility functions:
@@ -92,7 +166,6 @@ Roller comes loaded with several utility functions:
 - `avg`: Calculate the average of a set of dice rolls: `avg(4d6)`
 - `drop`: Drop the lowest value from a set of dice rolls: `drop(4d6)`
 - `count`: Count the number of times a specific value appears: `count(6, 8d6)`
-- `fate`: **COMING SOON** Roll fate dice
 
 ### Constructor Overloading
 
@@ -205,26 +278,6 @@ Fighter.roll('longsword.dmg.2h').total
 
 // the enemy druid is trying to entangle us; make a saving throw
 Fighter.roll('saves.STR').total
-```
-
-## Result Object
-
-When you call `roll()`, it returns a `RollerRollResult` object with the
-following properties:
-
-```ts
-interface RollerRollResult {
-  // The final aggregated value as a single number
-  total: number
-  // The array of rolls after any modifications (drop, min, max)
-  rolls: number[]
-  // The original array of all dice rolls before any modifications
-  originalRolls: number[]
-  // The notation used for the roll
-  notation: string
-  // Detailed breakdown for each roll
-  breakdown: RollerRoll[]
-}
 ```
 
 This consistent return structure makes it easy to work with roll results

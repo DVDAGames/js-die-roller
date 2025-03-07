@@ -8,6 +8,8 @@ import {
 } from '../constants/expressions'
 
 import { D20Node, NodeType, MethodNode } from '../types'
+import { FATE_DIE_SIZE_STRING } from '../constants'
+import { FATE_DIE_SIZE_INT } from '../constants'
 
 // map over nodes in the syntax string and return a lexical definition of each
 const map = (syntax = '', methods: MethodNode[] = []): D20Node[] => {
@@ -43,12 +45,22 @@ const map = (syntax = '', methods: MethodNode[] = []): D20Node[] => {
         if (rollMatch !== null) {
           const [, numberOfDice, dieSize] = rollMatch
 
-          const parsedDieSize = parseInt(dieSize, 10)
+          let parsedDieSize = parseInt(dieSize, 10)
+
+          if (Number.isNaN(parsedDieSize)) {
+            if (dieSize !== FATE_DIE_SIZE_STRING) {
+              console.error('BAD DIE SIZE')
+
+              throw new Error(
+                `Roller cannot roll ${dieSize} dice. Pleae check your syntax and try again.`
+              )
+            }
+          }
 
           return {
             type: NodeType.ROLL,
             value: node,
-            die: !Number.isNaN(parsedDieSize) ? parsedDieSize : dieSize,
+            die: Number.isNaN(parsedDieSize) ? dieSize : parsedDieSize,
             dice: parseInt(numberOfDice, 10),
           }
         }

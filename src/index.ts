@@ -12,7 +12,11 @@ import {
   DieSize,
 } from './utils/d20/types'
 
-import { FATE_DIE_SIZE_STRING, FATE_DIE_SIZE_INT } from './utils/d20/constants'
+import {
+  FATE_DIE_SIZE_STRING,
+  FATE_DIE_SIZE_INT,
+  FATE_DIE_SYMBOL_VALUES_MAP,
+} from './utils/d20/constants'
 
 import {
   DEFAULT_OPTIONS,
@@ -30,6 +34,7 @@ import {
   RollerRollNotation,
   RollerRollResult,
   RollerRoll,
+  RollerFateDieSymbol,
 } from './types'
 
 export type RollerMapper = (rolls: number[]) => number[]
@@ -54,6 +59,8 @@ export interface RollerInterface {
 }
 
 export default class Roller implements RollerInterface {
+  didRollFateDice: boolean = false
+
   /**
    * Options for various Roller functionality
    * @desc extend defaults with provided options
@@ -315,8 +322,6 @@ export default class Roller implements RollerInterface {
   roll(notation: RollerRollNotation): RollerRollResult {
     this.rolls = []
 
-    console.log('Roll Notation:', notation)
-
     const rollNotation = this.checkRollMap(notation)
 
     // Replace variables in the roll notation before executing
@@ -332,12 +337,24 @@ export default class Roller implements RollerInterface {
 
     // Keep track of all original dice rolls before any modifications
     let originalRolls: number[] = []
+    let fateRolls: RollerFateDieSymbol[] = []
+
+    // figure out if this was a fate roll
+    if (this.didRollFateDice) {
+      // convert the originalRolls to a fate dice symbol `□`, `+`, or `-`
+      fateRolls = originalRolls.map((roll) => this.convertToFateDieSymbol(roll))
+    }
 
     // Collect all original dice rolls from the breakdown
-    breakdown.forEach((roll) => {
+    breakdown.map((roll) => {
       Object.values(roll).forEach((value) => {
         if (typeof value === 'number') {
-          originalRolls.push(value)
+          if (this.didRollFateDice) {
+            // convert the originalRolls to a fate dice symbol `□`, `+`, or `-`
+            fateRolls.push(this.convertToFateDieSymbol(value))
+          } else {
+            originalRolls.push(value as number)
+          }
         }
       })
     })
@@ -373,7 +390,8 @@ export default class Roller implements RollerInterface {
       breakdown,
       total: finalTotal,
       rolls: totalNumbers,
-      originalRolls: originalRolls,
+      originalRolls,
+      fateRolls,
     }
   }
 
@@ -609,13 +627,14 @@ export default class Roller implements RollerInterface {
     let dieSize = node.die
 
     if (typeof node.die !== 'number') {
-      if (dieSize === FATE_DIE_SIZE_STRING) {
-        dieSize = FATE_DIE_SIZE_INT
-      } else {
-        console.error('Unexpected die size')
+      if (dieSize !== FATE_DIE_SIZE_STRING) {
         throw new Error(
-          `Roller cannot roll ${dieSize} dice. Pleae check your syntax and try again.`
+          `Roller cannot roll ${dieSize} dice. Please check your syntax and try again.`
         )
+      } else {
+        dieSize = FATE_DIE_SIZE_INT
+
+        this.didRollFateDice = true
       }
     }
 
@@ -626,7 +645,7 @@ export default class Roller implements RollerInterface {
       )
 
       if (node.die == FATE_DIE_SIZE_STRING) {
-        thisRoll = this.convertDieNumberToFateDieNumber(thisRoll)
+        thisRoll = this.convertToFateDie(thisRoll)
       }
 
       rolls.push(thisRoll)
@@ -639,8 +658,36 @@ export default class Roller implements RollerInterface {
     return rolls
   }
 
-  convertDieNumberToFateDieNumber(dienumber: number): number {
-    return dienumber < 3 ? -1 : dienumber < 5 ? 0 : 1
+  /**
+   * Converts a die number to a fate die number
+   * @param {Number} dienumber The number to convert
+   * @returns {Number} The converted number
+   */
+  convertToFateDie(
+    dienumber: number,
+    fateNeutralCount: number = this.options.defaultFateNeutralCount
+  ): number {
+    if (fateNeutralCount === 4) {
+      if (dienumber < 3) {
+        return -1
+      } else if (dienumber < 5) {
+        return 0
+      } else {
+        return 1
+      }
+    }
+
+    if (dienumber < 3) {
+      return -1
+    } else if (dienumber < 5) {
+      return 0
+    } else {
+      return 1
+    }
+  }
+
+  convertToFateDieSymbol(rollValue: number): RollerFateDieSymbol {
+    return FATE_DIE_SYMBOL_VALUES_MAP[rollValue]
   }
 
   /**
